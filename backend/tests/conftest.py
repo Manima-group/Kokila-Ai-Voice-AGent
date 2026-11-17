@@ -14,11 +14,11 @@ import uuid  # noqa: E402
 from datetime import UTC, datetime, timedelta  # noqa: E402
 
 import pytest  # noqa: E402
-from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import text  # noqa: E402
 
+from alembic import command  # noqa: E402
 from app.db.session import SessionLocal, engine  # noqa: E402
 
 KEEP = {"alembic_version", "plans"}
@@ -89,16 +89,32 @@ def grant_plan(db, tenant_id, *, outbound=True, minutes=1000, agents=5, concurre
 
     plan = db.query(Plan).filter_by(code=code).one_or_none()
     if plan is None:
-        plan = Plan(code=code, name="Growth (test)", price_minor=499900, included_minutes=minutes, max_agents=agents,
-                    max_concurrent_calls=concurrency, max_users=users, features={"outbound": outbound, "calendar": True})
+        plan = Plan(
+            code=code,
+            name="Growth (test)",
+            price_minor=499900,
+            included_minutes=minutes,
+            max_agents=agents,
+            max_concurrent_calls=concurrency,
+            max_users=users,
+            features={"outbound": outbound, "calendar": True},
+        )
         db.add(plan)
         db.flush()
     for s in db.query(Subscription).filter_by(tenant_id=uuid.UUID(str(tenant_id)), is_current=True):
         s.is_current = False
     db.flush()
     now = datetime.now(UTC)
-    db.add(Subscription(tenant_id=uuid.UUID(str(tenant_id)), plan_id=plan.id, status="active", current_period_start=now - timedelta(days=1),
-                        current_period_end=now + timedelta(days=29), is_current=True))
+    db.add(
+        Subscription(
+            tenant_id=uuid.UUID(str(tenant_id)),
+            plan_id=plan.id,
+            status="active",
+            current_period_start=now - timedelta(days=1),
+            current_period_end=now + timedelta(days=29),
+            is_current=True,
+        )
+    )
     db.commit()
     return plan
 

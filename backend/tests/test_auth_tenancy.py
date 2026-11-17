@@ -45,7 +45,9 @@ def test_expired_and_tampered_tokens(client):
     expired = jwt.encode({"sub": me["id"], "typ": "access", "exp": datetime.now(UTC) - timedelta(seconds=5)}, get_settings().jwt_secret, algorithm="HS256")
     r = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {expired}"})
     assert r.status_code == 401 and r.json()["error"]["code"] == "token_expired"
-    forged = jwt.encode({"sub": me["id"], "typ": "access", "exp": datetime.now(UTC) + timedelta(minutes=5)}, "not-the-secret-xxxxxxxxxxxxxxxxxxxx", algorithm="HS256")
+    forged = jwt.encode(
+        {"sub": me["id"], "typ": "access", "exp": datetime.now(UTC) + timedelta(minutes=5)}, "not-the-secret-xxxxxxxxxxxxxxxxxxxx", algorithm="HS256"
+    )
     assert client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {forged}"}).status_code == 401
     assert client.get("/api/v1/contacts").status_code == 401
 
