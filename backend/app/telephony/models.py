@@ -27,7 +27,7 @@ class PhoneNumber(IdMixin, TimestampMixin, TenantMixin, Base):
     route_key: Mapped[str] = mapped_column(String(80))
     e164: Mapped[str] = mapped_column(String(20), index=True)
     label: Mapped[str | None] = mapped_column(String(120))
-    number_type: Mapped[str] = mapped_column(String(20), default="service")  # service(160) | promotional(140) | other
+    number_type: Mapped[str] = mapped_column(String(20), default="service")  # service(1600-series) | promotional(140-series) | other
     inbound_agent_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="SET NULL"))
     outbound_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     status: Mapped[str] = mapped_column(String(20), default="active")

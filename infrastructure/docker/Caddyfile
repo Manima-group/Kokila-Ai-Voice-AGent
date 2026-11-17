@@ -1,0 +1,13 @@
+# App (Next.js; proxies /api/v1 to the API internally)
+{$APP_DOMAIN} {
+	encode gzip
+	header Strict-Transport-Security "max-age=63072000; includeSubDomains"
+	reverse_proxy web:3000
+}
+
+# Public API host used for provider webhooks (Retell, Razorpay) and agent tool calls.
+{$API_DOMAIN} {
+	encode gzip
+	header Strict-Transport-Security "max-age=63072000; includeSubDomains"
+	reverse_proxy api:8000
+}

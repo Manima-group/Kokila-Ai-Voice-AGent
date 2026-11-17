@@ -1,0 +1,76 @@
+# Local development / single-server MVP stack. Production overrides: infrastructure/compose/docker-compose.prod.yml
+name: kokila
+
+x-backend: &backend
+  build: ./backend
+  env_file: .env
+  environment:
+    DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-kokila}:${POSTGRES_PASSWORD:-kokila}@postgres:5432/${POSTGRES_DB:-kokila}
+    REDIS_URL: redis://redis:6379/0
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kokila}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kokila}
+      POSTGRES_DB: ${POSTGRES_DB:-kokila}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kokila}"]
+      interval: 5s
+      retries: 10
+    ports: ["${POSTGRES_PORT:-5432}:5432"]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+
+  api:
+    <<: *backend
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    ports: ["${API_PORT:-8000}:8000"]
+
+  worker:
+    <<: *backend
+    command: ["celery", "-A", "app.workers.celery_app", "worker", "-l", "info", "--concurrency", "4"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$HOSTNAME || exit 1"]
+      interval: 60s
+      timeout: 15s
+
+  beat:
+    <<: *backend
+    command: ["celery", "-A", "app.workers.celery_app", "beat", "-l", "info", "-s", "/tmp/celerybeat-schedule"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        BACKEND_URL: http://api:8000  # baked into Next.js rewrites at build time
+    depends_on: [api]
+    ports: ["${WEB_PORT:-3000}:3000"]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:

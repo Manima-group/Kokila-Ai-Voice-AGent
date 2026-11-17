@@ -48,7 +48,7 @@ export default function PhoneNumbers() {
           <ErrorBox error={add.error} />
           <Field label="Number"><input className="input" value={form.e164} onChange={(e) => setForm({ ...form, e164: e.target.value })} placeholder="+91 80 4123 4567" /></Field>
           <Field label="Label"><input className="input" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} /></Field>
-          <Field label="Number type" hint="India: 160-series for service/transactional, 140-series for promotional calls">
+          <Field label="Number type" hint="India: 1600-series for service/transactional, 140-series for promotional calls">
             <select className="input" value={form.number_type} onChange={(e) => setForm({ ...form, number_type: e.target.value })}>
               <option value="service">Service / transactional</option><option value="promotional">Promotional</option><option value="other">Other</option>
             </select>

@@ -66,6 +66,9 @@ def compliance_problems(db: Session, campaign: Campaign, tenant: Tenant, provide
         comp = tenant.compliance or {}
         if not comp.get("outbound_approved"):
             problems.append("tenant_outbound_compliance_not_approved")
+        # TCCCPR (Feb 2025 amendment): promotional calls from 140-series, service/transactional from 1600-series.
+        if number is not None and number.number_type not in ("service", "promotional"):
+            problems.append("caller_id_not_designated_commercial_series")
     return problems
 
 
