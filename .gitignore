@@ -14,3 +14,4 @@ out/
 coverage/
 *.log
 backups/
+*.tsbuildinfo
