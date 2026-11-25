@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/*
+ * Provisional Kokila theme: yellow / white / cream / grey (§26.2).
+ * Manima Hub design tokens were not available to this build, so these are semantic placeholders chosen for
+ * WCAG AA contrast. Visual parity with hub.manima.co.in is UNVERIFIED until authorized Hub assets are supplied;
+ * swap values here only — components reference the semantic names.
+ */
+@theme {
+  --color-k-yellow-50: #fffbea;
+  --color-k-yellow-100: #fff3c4;
+  --color-k-yellow-300: #fde68a;
+  --color-k-yellow-400: #f9d65c;
+  --color-k-yellow-500: #f2c230;
+  --color-k-yellow-700: #8a6a00;
+  --color-k-cream: #fff8e7;
+  --color-k-white: #ffffff;
+  --color-k-grey-50: #f7f7f5;
+  --color-k-grey-100: #eeeeeb;
+  --color-k-grey-200: #e2e2de;
+  --color-k-grey-400: #a3a39e;
+  --color-k-grey-600: #5f5f5a;
+  --color-k-grey-800: #2f2f2c;
+  --color-k-grey-900: #1d1d1b;
+  --color-k-danger: #b42318;
+  --color-k-success: #1e7b34;
+  --font-sans: "Noto Sans", "Noto Sans Telugu", "Noto Sans Devanagari", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius-k: 14px;
+}
+
+html { background: var(--color-k-cream); color: var(--color-k-grey-900); }
+body { font-family: var(--font-sans); }
+:focus-visible { outline: 3px solid var(--color-k-yellow-700); outline-offset: 2px; }
+
+@utility k-card { @apply bg-k-white border border-k-grey-200 rounded-[var(--radius-k)]; }
+@utility k-btn { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-k-grey-200 bg-k-white px-4 py-2.5 text-sm font-medium text-k-grey-900 hover:bg-k-grey-50 disabled:opacity-50 disabled:cursor-not-allowed; }
+@utility k-btn-primary { @apply k-btn bg-k-yellow-500 border-k-yellow-500 text-k-grey-900 hover:bg-k-yellow-400; }
+@utility k-btn-danger { @apply k-btn border-k-danger text-k-danger; }
+@utility k-input { @apply w-full rounded-xl border border-k-grey-200 bg-k-white px-3 py-2.5 text-sm text-k-grey-900 placeholder:text-k-grey-400; }
+@utility k-label { @apply block text-xs font-semibold uppercase tracking-wide text-k-grey-600 mb-1; }
+
+@keyframes k-pulse { to { transform: scale(1.07); } }
+.k-orb-live { animation: k-pulse 0.9s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) { .k-orb-live { animation: none; } }
