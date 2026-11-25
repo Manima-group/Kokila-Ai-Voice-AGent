@@ -334,7 +334,7 @@ async def run_turn(
 async def _broker_call(
     ctx: TenantContext, call: ToolCallRequest, allowed: set[str], conv_id: uuid.UUID, turn_id: uuid.UUID
 ) -> dict[str, Any]:
-    key = f"turn:{turn_id}:{call.id}"[:128]
+    run_ref = f"turn:{turn_id}:{call.id}"[:128]
     if call.key not in allowed or call.key not in TOOLS:
         # The model asked for something not discoverable: record nothing executable, report truthfully.
         return {
@@ -351,7 +351,11 @@ async def _broker_call(
             "created_at": datetime.now(UTC).isoformat(),
         }
     run, approval = await request_run(
-        ctx, tool_key=call.key, args=call.arguments, idempotency_key=key, conversation_id=conv_id
+        ctx,
+        tool_key=call.key,
+        args=call.arguments,
+        idempotency_key=run_ref,
+        conversation_id=conv_id,
     )
     return run_out(run, approval)
 
