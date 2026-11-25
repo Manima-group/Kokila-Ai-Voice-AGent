@@ -1,0 +1,108 @@
+# Local development and reference private deployment (§31.1). Hosted production uses ECS, not Compose.
+name: kokila
+
+x-api-env: &api-env
+  KOKILA_ENV: ${KOKILA_ENV:-development}
+  KOKILA_DATABASE_URL: postgresql+asyncpg://kokila_app:${KOKILA_APP_DB_PASSWORD:-kokila_app_dev}@postgres:5432/kokila
+  KOKILA_MIGRATION_DATABASE_URL: postgresql+asyncpg://kokila_owner:${POSTGRES_PASSWORD:-kokila_owner_dev}@postgres:5432/kokila
+  KOKILA_REDIS_URL: redis://redis:6379/0
+  KOKILA_JWT_SECRET: ${KOKILA_JWT_SECRET:-dev-only-change-me-dev-only-change-me}
+  KOKILA_DATA_ENCRYPTION_KEY: ${KOKILA_DATA_ENCRYPTION_KEY:-ZGV2LW9ubHktZGF0YS1rZXktMzItYnl0ZXMtbG9uZyE=}
+  KOKILA_CORS_ORIGINS: '["http://localhost:3000"]'
+  KOKILA_REASONING_PROVIDER: ${KOKILA_REASONING_PROVIDER:-none}
+  KOKILA_REASONING_FALLBACK_PROVIDER: ${KOKILA_REASONING_FALLBACK_PROVIDER:-none}
+  KOKILA_OPENAI_API_KEY: ${KOKILA_OPENAI_API_KEY:-}
+  KOKILA_OPENAI_MODEL: ${KOKILA_OPENAI_MODEL:-}
+  KOKILA_OPENAI_REALTIME_MODEL: ${KOKILA_OPENAI_REALTIME_MODEL:-}
+  KOKILA_ANTHROPIC_API_KEY: ${KOKILA_ANTHROPIC_API_KEY:-}
+  KOKILA_ANTHROPIC_MODEL: ${KOKILA_ANTHROPIC_MODEL:-}
+  KOKILA_LIVEKIT_URL: ${KOKILA_LIVEKIT_URL:-}
+  KOKILA_LIVEKIT_API_KEY: ${KOKILA_LIVEKIT_API_KEY:-}
+  KOKILA_LIVEKIT_API_SECRET: ${KOKILA_LIVEKIT_API_SECRET:-}
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: kokila
+      POSTGRES_USER: kokila_owner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kokila_owner_dev}
+      KOKILA_APP_DB_PASSWORD: ${KOKILA_APP_DB_PASSWORD:-kokila_app_dev}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres-init.sh:/docker-entrypoint-initdb.d/10-kokila.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kokila_owner -d kokila"]
+      interval: 5s
+      retries: 20
+    networks: [internal]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+    networks: [internal]
+
+  migrate:
+    build: ./services/api
+    command: ["sh", "-c", "alembic upgrade head && python -m app.cli bootstrap"]
+    environment: *api-env
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [internal]
+    restart: "no"
+
+  api:
+    build: ./services/api
+    environment: *api-env
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    ports: ["127.0.0.1:8000:8000"]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 10s
+      retries: 6
+    stop_grace_period: 25s
+    networks: [internal]
+
+  worker:
+    build: ./services/api
+    command: ["celery", "-A", "app.worker.celery_app", "worker", "-B", "--loglevel=INFO", "--concurrency=2"]
+    environment: *api-env
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [internal]
+
+  web:
+    build: ./apps/web
+    environment:
+      KOKILA_API_ORIGIN: http://api:8000
+    depends_on:
+      api: { condition: service_healthy }
+    ports: ["127.0.0.1:3000:3000"]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [internal]
+
+volumes:
+  pgdata: {}
+  redisdata: {}
+
+networks:
+  internal: {}

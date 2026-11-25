@@ -1,0 +1,80 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# NOTE: third-party actions are referenced by major tag. Pin each to a reviewed commit SHA before
+# protecting main (§31.3; tracked as docs/known-issues.md KI-04).
+jobs:
+  api:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: kokila_test
+          POSTGRES_USER: kokila_owner
+          POSTGRES_PASSWORD: kokila_owner_dev
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U kokila_owner" --health-interval 5s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-retries 20
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Create app role (NOBYPASSRLS)
+        env: { PGPASSWORD: kokila_owner_dev }
+        run: |
+          psql -h localhost -U kokila_owner -d kokila_test -c \
+            "CREATE ROLE kokila_app LOGIN PASSWORD 'kokila_app_dev' NOSUPERUSER NOBYPASSRLS; CREATE EXTENSION IF NOT EXISTS vector;"
+      - run: uv sync --locked
+      - run: uv run ruff format --check .
+      - run: uv run ruff check .
+      - run: uv run mypy app
+      - name: Registry, contracts and OpenAPI drift
+        run: |
+          uv run python -m app.cli export-contracts --out /tmp/contracts.ts
+          diff -u ../../apps/web/src/lib/contracts.generated.ts /tmp/contracts.ts
+          uv run python -c "import json;from app.main import app;json.dump(app.openapi(),open('/tmp/openapi.json','w'),indent=2,sort_keys=True)"
+          diff -u ../../docs/openapi.json /tmp/openapi.json
+      - run: uv run pytest -q
+
+  web:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+
+  secrets-scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }

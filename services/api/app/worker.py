@@ -21,9 +21,13 @@ from app.models import OutboxEvent
 log = logging.getLogger("kokila.worker")
 settings = get_settings()
 celery_app = Celery("kokila", broker=settings.redis_url, backend=None)
-celery_app.conf.update(task_acks_late=True, worker_prefetch_multiplier=1, task_reject_on_worker_lost=True,
-                       beat_schedule={"dispatch-outbox": {"task": "kokila.dispatch_outbox", "schedule": 2.0}},
-                       timezone="UTC")
+celery_app.conf.update(
+    task_acks_late=True,
+    worker_prefetch_multiplier=1,
+    task_reject_on_worker_lost=True,
+    beat_schedule={"dispatch-outbox": {"task": "kokila.dispatch_outbox", "schedule": 2.0}},
+    timezone="UTC",
+)
 
 BATCH = 200
 MAX_ATTEMPTS = 10
@@ -37,19 +41,32 @@ async def dispatch_outbox_once() -> int:
     """Claim pending events with SKIP LOCKED so concurrent workers never double-publish a row."""
     sent = 0
     async with unit_of_work(scope=DbScope.SYSTEM) as db:
-        rows = (await db.scalars(select(OutboxEvent).where(OutboxEvent.status == "pending",
-                                                           OutboxEvent.next_attempt_at <= datetime.now(UTC))
-                                 .order_by(OutboxEvent.created_at).limit(BATCH)
-                                 .with_for_update(skip_locked=True))).all()
+        rows = (
+            await db.scalars(
+                select(OutboxEvent)
+                .where(OutboxEvent.status == "pending", OutboxEvent.next_attempt_at <= datetime.now(UTC))
+                .order_by(OutboxEvent.created_at)
+                .limit(BATCH)
+                .with_for_update(skip_locked=True)
+            )
+        ).all()
         r = redis_client()
         for ev in rows:
             try:
-                await r.publish(channel_for(str(ev.tenant_id)), orjson.dumps(
-                    {"id": str(ev.id), "type": ev.event_type, "payload": ev.payload,
-                     "created_at": ev.created_at.isoformat()}))
+                await r.publish(
+                    channel_for(str(ev.tenant_id)),
+                    orjson.dumps(
+                        {
+                            "id": str(ev.id),
+                            "type": ev.event_type,
+                            "payload": ev.payload,
+                            "created_at": ev.created_at.isoformat(),
+                        }
+                    ),
+                )
             except OSError:
                 ev.attempts += 1
-                ev.next_attempt_at = datetime.now(UTC) + timedelta(seconds=min(300, 2 ** ev.attempts))
+                ev.next_attempt_at = datetime.now(UTC) + timedelta(seconds=min(300, 2**ev.attempts))
                 if ev.attempts >= MAX_ATTEMPTS:
                     ev.status = "failed"
                 continue

@@ -1,0 +1,29 @@
+requirement_id,source_section,capability_key,component,api_or_schema,test_ids,status,evidence,blocker
+KOK-01,1;4;14;27.4,assistant.voice,apps/web/src/app/assistant; apps/web/src/lib/speech.ts; services/api/app/assistant,/v1/assistant/sessions*,test_assistant::test_session_starts_fully_muted; tests/e2e/smoke.py,in_progress,Browser Web Speech path + server session state machine,LiveKit/OpenAI Realtime client media path not built; no credentials; no latency measurement (§16)
+KOK-02,1;14.1,assistant.text,services/api/app/assistant/service.py,/v1/conversations/{id}/turns,test_assistant::test_text_turn_with_dev_mock_and_idempotent_replay,mock_verified,dev_mock only,OpenAI/Anthropic adapters need live verification with authorized keys
+KOK-03,5,assistant.memory,services/api/app/memory,/v1/memory*,test_assistant::test_memory_crud_and_revision; test_isolation::test_rls_blocks_raw_sql_without_context,mock_verified,Full-text retrieval; RLS user-private,Vector retrieval needs embedding provider + benchmark
+KOK-03-WRITE,5;8,assistant.memory.write,services/api/app/tools,memory.save tool,test_assistant::test_memory_save_requires_bound_approval,mock_verified,Approval bound to args hash,
+KOK-04,1,assistant.research,-,-,-,not_started,,Brave Search API access/terms not obtained
+KOK-05,1,voice.inbound,-,-,-,not_started,,Retell/telephony accounts and consented test numbers required
+KOK-06,1;8,voice.outbound,-,-,-,not_started,,Consent/suppression schema planned; telephony credentials and legal review required
+KOK-07,1,voice.agents,-,-,-,not_started,,
+KOK-08,21,connect.embed,-,-,-,not_started,,
+KOK-09,21.3,connect.analytics,-,-,-,not_started,,
+KOK-10,22,vision.documents,-,-,-,not_started,,
+KOK-11,22,automate.workflows,-,-,-,not_started,,
+KOK-12,22,proactive.alerts,-,-,-,not_started,,
+KOK-13,22,meetings.intelligence,-,-,-,not_started,,
+KOK-14,23,assistant.handsfree,services/api/app/identity/router.py,/v1/assistant/preferences/wake-word/validate,test_identity::test_wake_word_reports_unsupported_honestly,in_progress,Honest unsupported status + push-to-talk fallback,No wake-word detector evaluated (openWakeWord etc.)
+KOK-14-MUTE,23.1a;27.4,assistant.voice,services/api/app/assistant/router.py; apps/web/src/app/assistant/page.tsx,/v1/assistant/sessions/{id}/controls,test_assistant::test_mute_controls_revision_and_device_rules; test_reconnect_on_same_device...; tests/e2e/smoke.py,mock_verified,Server-authoritative flags; local abort before persist; new device starts muted; LiveKit canPublish mirrors mic flag,Frame-level 'no transmission after mute' test needs realtime media path; cross-browser device testing pending
+KOK-15,22;27.6,deployment.private,docker-compose.yml,-,-,not_started,Compose reference only,Local model adapters/egress denial not built
+KOK-16,22,developer.marketplace,-,-,-,not_started,,
+KOK-17,25,platform.admin,services/api/app/platform; apps/web/src/app/admin,/v1/platform/*,test_entitlements::*,mock_verified,4/6/all packages; atomic dependency conflicts; kill switch; suspension; MFA required,Delegated support/finance roles have no UI yet; quota editor UI pending
+KOK-18,11;17,platform.billing,services/api/app/platform/entitlements.py,usage_events; plans; subscriptions,test_assistant::test_quota_exhaustion,in_progress,Usage ledger + monthly quotas + immutable plan versions,Razorpay/Stripe integration and invoice reconciliation not built
+KOK-19,8;19;24.2;32.1,platform.security,services/api/app/core; alembic/versions/0002,RLS policies; Argon2id; refresh rotation,test_isolation::*; test_auth::*,in_progress,RLS on all tenant tables; append-only audit; neutral auth errors; reuse detection,No pen test; no ZAP/Trivy/CodeQL run; CSP has 'unsafe-inline'
+KOK-20,28,assistant.identity,services/api/app/identity,/v1/assistant/preferences; /v1/tenants/{id}/assistant-identity,test_identity::*,mock_verified,Resolution order; tenant lock; injection/XSS rejected; Telugu names,Agent-scope identity awaits voice.agents
+KOK-CONN-*,22;27.5,connector.*,services/api/app/domain/capabilities.py,capability registry only,test_entitlements::test_registry_is_acyclic_and_complete,not_started,Registered keys only,Vendor sandbox/live accounts needed for all 12 connectors
+OPS-01,31.1,-,Dockerfiles; docker-compose.yml,-,docker compose config,in_progress,Compose validates,Images not built here (no Docker daemon); base images not digest-pinned
+OPS-02,31.2,-,-,-,-,not_started,,Terraform/AWS accounts
+OPS-03,31.3,-,.github/workflows/ci.yml,-,-,in_progress,CI defined,Not yet executed on GitHub; actions not SHA-pinned; no image signing/SBOM
+OPS-04,31.4,-,-,-,-,not_started,,
+OPS-05,31.5,-,docs/*,-,-,in_progress,README/status/runbook,

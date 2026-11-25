@@ -216,7 +216,7 @@ def main() -> None:
     sa.add_argument("--email", required=True)
     sa.add_argument("--name", default="Manima Super Admin")
     ec = sub.add_parser("export-contracts")
-    ec.add_argument("--out", default="../../packages/shared/src/contracts.generated.ts")
+    ec.add_argument("--out", default="../../apps/web/src/lib/contracts.generated.ts")
     args = ap.parse_args()
 
     async def run() -> None:
