@@ -1,0 +1,31 @@
+# Production overrides for a single-server deployment behind Caddy (automatic HTTPS).
+# Usage: docker compose -f docker-compose.yml -f infrastructure/compose/docker-compose.prod.yml up -d
+services:
+  postgres:
+    ports: !reset []
+  api:
+    ports: !reset []
+    environment:
+      ENVIRONMENT: production
+      COOKIE_SECURE: "true"
+  worker:
+    environment: { ENVIRONMENT: production, COOKIE_SECURE: "true" }
+  beat:
+    environment: { ENVIRONMENT: production, COOKIE_SECURE: "true" }
+  migrate:
+    environment: { ENVIRONMENT: production, COOKIE_SECURE: "true" }
+  web:
+    ports: !reset []
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN}
+      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN}
+    volumes:
+      - ./infrastructure/docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [web, api]
+volumes:
+  caddy_data:

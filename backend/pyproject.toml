@@ -1,0 +1,59 @@
+[project]
+name = "kokila-backend"
+version = "0.1.0"
+description = "Kokila — multi-tenant AI voice agent SaaS (Manima AI-Tech Solutions)"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "sqlalchemy>=2.0.30",
+  "psycopg[binary]>=3.2",
+  "alembic>=1.13",
+  "pydantic[email]>=2.7",
+  "pydantic-settings>=2.3",
+  "pyjwt>=2.9",
+  "argon2-cffi>=23.1",
+  "cryptography>=43",
+  "celery>=5.4",
+  "packaging>=24.0",
+  "redis>=5.0",
+  "httpx>=0.27",
+  "python-multipart>=0.0.9",
+  "phonenumbers>=8.13",
+  "retell-sdk>=4.0",
+  "razorpay>=1.4",
+  "structlog>=24.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
+
+[tool.ruff]
+line-length = 160
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["S101", "B008", "S105", "S106", "B904"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S"]
+"alembic/*" = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -p no:logging"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = false
+plugins = ["pydantic.mypy"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]

@@ -1,0 +1,51 @@
+requirement_id,source,requirement,implementation,tests_or_evidence,status,blocker_or_note
+AMD-01,Amend §3,Orange/white/grey theme,frontend/src/app/globals.css,manual screenshot review,implemented,Playwright screenshots 27 Nov
+AMD-02,Amend §4,Login/signup redirect to /overview (not product),"(auth)/login,signup; Shell",e2e flow.py signup_lands_on,implemented_tested,
+AMD-03,Amend §5,"Product selection dashboard with real stats, subscription, org switcher, profile, notifications","(app)/overview, Shell",e2e flow.py + screenshots,implemented_tested,
+AMD-04,Amend §3/§11,Locked product cards + Upgrade/Request access; direct URL and API denied,Shell LockedProduct; require_capability,test_product_entitlements_enforced_on_api; e2e locked_direct_url,implemented_tested,
+AMD-05,Amend §6,"Calling Agent workspace with existing features moved, old URLs redirect",(app)/calling-agent/*; next.config redirects,e2e old_url_redirect; 43 prior backend tests,implemented_tested,
+AMD-06,Amend §6,Inbound Calls / Recordings and Transcripts as separate nav items,calls pages,,partial,Covered by Call history + call detail; no dedicated pages
+AMD-07,Amend §7,"Business mode: sales, revenue, stock, overdue, outstanding, compare, follow-up task, appointments","assistant/*, connect/metrics",test_business_mode_uses_real_connector_data; test_erpnext_connection_and_metrics,mock_verified,Live ERPNext + LLM credentials pending
+AMD-08,Amend §7,"Responses: text, tables, charts, KPI cards, downloadable reports, voice, source references",Artifacts.tsx,e2e assistant.py screenshot,implemented_tested,Document previews not implemented
+AMD-09,Amend §7,"Personal mode: chat, history, user-controlled memory, reminders",assistant router/service,test_personal_mode_isolation_memory_and_reminders,mock_verified,LLM credentials pending
+AMD-10,Amend §7,Personal: web research with citations,service.web_search (Brave),,blocked,BRAVE_API_KEY not provided; untested live
+AMD-11,Amend §7,"Personal: document/image understanding, routines, meeting summaries",,,not_started,Vision/meetings modules not built
+AMD-12,Amend §7,"Voice UI: mic mute, speaker mute, start/stop, transcription, interruption, language, voice, custom name, wake phrase, history, text, visible states","useVoice.ts, Workspace.tsx",manual; build,implemented,Browser Web Speech API; file attachments not implemented
+AMD-13,Amend §7,Evaluate LiveKit / OpenAI Realtime / alt speech providers with real tests per language,,,blocked,No provider credentials; no audio evaluation performed
+AMD-14,Amend §8,"Single auth, identity, org, licensing, integration mgmt, Super Admin",backend app/*,full backend suite,implemented_tested,Repo audit: single backend/DB already
+AMD-15,Amend §9,LLM provider abstraction; actual provider/model stored and displayed; no silent fallback,assistant/llm.py,test_assistant_not_configured_is_explicit; provider/model asserted,implemented_tested,OpenAI/Anthropic adapters not live-verified
+AMD-16,Amend §9,"RAG with pgvector, feedback collection, admin review of failed conversations",,,not_started,pgvector not installed; knowledge base is prompt-injected text
+AMD-17,Amend §10,"Connector registry, encrypted creds, connection test, permission-scoped read, health, audit",connect/*,test_erpnext_connection_and_metrics; test_planned_connectors_cannot_be_faked,implemented_tested,
+AMD-18,Amend §10,Manima Hub first-party connector,connect/adapters ManimaHubAdapter,,blocked,Manima Hub must implement /kokila/v1 endpoints
+AMD-19,Amend §10,ERPNext connector,ERPNextAdapter,contract tests (MockTransport); local test double UI e2e,mock_verified,Live ERPNext instance pending
+AMD-20,Amend §5/§10,"Zoho, Tally, Salesforce, SAP, Dynamics, Gmail, Outlook, WhatsApp, Teams, Slack",registry (planned),,blocked,Vendor sandbox accounts and OAuth apps required
+AMD-21,Amend §10,Embeddable SDK and widgets,,,not_started,
+AMD-22,Amend §11,Super Admin assign/revoke product and feature capabilities; KOK registry,platform/router.py; admin UI,test_capability_admin_conflicts_and_controls,implemented_tested,
+AMD-23,Amend §11,AI usage limits per tenant,registry quota_metric,,partial,Assistant messages not yet metered against limits
+AMD-24,Amend §12,Platform sidebar + contextual product nav + Back/Switcher/Org/Profile/Notifications/Sign out,Shell.tsx,e2e,implemented_tested,
+AMD-25,Amend §14,PostgreSQL row-level security,,,not_started,App-level isolation tested; RLS planned
+AMD-26,Amend §14,MFA for administrators; password reset,,,not_started,
+AMD-27,Amend §14,Human approval for sensitive actions,assistant_actions + args hash,test_approval_required_for_writes,implemented_tested,
+AMD-28,Amend §15,docker compose up --build -d full stack,docker-compose.yml,docker compose config,partial,Images not built here (Docker Hub blocked); CI builds
+AMD-29,Amend §15,Terraform infrastructure,,,not_started,
+AMD-30,Amend §16,Backend and frontend tests and production builds pass,CI,52 backend tests; lint/tsc/next build,implemented_tested,
+KOK-01,v5 §26.4,assistant.voice,useVoice.ts,,partial,Browser speech only
+KOK-02,v5 §26.4,assistant.text,assistant/*,tests,mock_verified,LLM live pending
+KOK-03,v5 §26.4,assistant.memory,memory_items,tests,implemented_tested,
+KOK-04,v5 §26.4,assistant.research,web_search,,blocked,Brave key
+KOK-05,v5 §26.4,voice.inbound,calls/webhooks,tests,mock_verified,Retell live pending
+KOK-06,v5 §26.4,voice.outbound,campaigns,tests,mock_verified,Retell live + compliance
+KOK-07,v5 §26.4,voice.agents,agents,tests,mock_verified,
+KOK-08,v5 §26.4,connect.embed,,,not_started,
+KOK-09,v5 §26.4,connect.analytics,connect/metrics,tests,mock_verified,"XLSX/PDF export, ECharts not implemented (CSV only)"
+KOK-10,v5 §26.4,vision.documents,,,not_started,
+KOK-11,v5 §26.4,automate.workflows,outbox webhooks/n8n,tests,partial,No visual workflow builder
+KOK-12,v5 §26.4,proactive.alerts,,,not_started,
+KOK-13,v5 §26.4,meetings.intelligence,,,not_started,
+KOK-14,v5 §26.4,"assistant.handsfree (wake phrase, mute)",useVoice.ts,,partial,Foreground browser only; no detector evaluation
+KOK-15,v5 §26.4,deployment.private,,,not_started,
+KOK-16,v5 §26.4,developer.marketplace,,,not_started,
+KOK-17,v5 §26.4,platform.admin,admin + platform routers,tests,implemented_tested,MFA missing
+KOK-18,v5 §26.4,platform.billing,billing,tests,mock_verified,Razorpay live pending
+KOK-19,v5 §26.4,platform.security,"auth/deps, audit",tests,partial,"RLS, MFA, pen test pending"
+KOK-20,v5 §26.4,assistant.identity,assistant_preferences,test_assistant_identity_requires_capability,implemented_tested,

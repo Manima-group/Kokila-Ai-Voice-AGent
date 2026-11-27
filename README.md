@@ -1,104 +1,55 @@
-# Kokila — Intelligence that speaks
+# Kokila — Intelligence that speaks.
 
-Kokila is Manima AI-Tech Solutions' multilingual voice AI platform: **Kokila Assistant** (B2C, responsive web),
-**Kokila Voice** (B2B) and the shared **Kokila Connect** layer, built against the frozen
-[Version 5.0 specification](docs/spec/Kokila-V5.md).
+Unified AI SaaS by **Manima AI-Tech Solutions**: one login, one product-selection Overview, two products and shared integrations.
 
-> **Status:** foundation release. The control plane, entitlements, assistant sessions, mute controls, turns, tool
-> approvals, memory, identity, Super Admin and web app all work and are tested. Many spec modules are still to be
-> built, and no live vendor integration has been verified yet. See [docs/implementation-status.md](docs/implementation-status.md)
-> for the truthful requirement-by-requirement picture. Nothing here is production-ready yet.
+- **Calling Agent** — AI voice agents for inbound calls, consent-based outbound campaigns, CRM, appointments and call analytics.
+- **Business Assistant** — voice/text assistant over your connected business data (Business mode) plus a private Personal mode with memory and reminders.
+- **Kokila Connect** — shared integration layer (Manima Hub, ERPNext, Google Calendar, n8n implemented; more planned).
+- **Manima Super Admin** — tenants, plans, per-client product/feature licensing, kill switches, health and audit.
 
-## Repository layout
+| Layer | Stack |
+|---|---|
+| API | Python 3.12, FastAPI, SQLAlchemy 2, Pydantic v2, Alembic (modular monolith) |
+| Workers | Celery + Redis (campaign dispatch, outbox, webhook retry, reminders, reconciliation, retention) |
+| Data | PostgreSQL 16, Redis 7 |
+| AI | Voice: Retell AI via provider abstraction (+ mock); Assistant LLM: OpenAI or Anthropic (explicit model); browser speech |
+| Payments | Razorpay |
+| Web | Next.js 16, React 19, TypeScript, Tailwind CSS 4, TanStack Query (orange/white/grey) |
+| Infra | Docker, Docker Compose, Caddy (HTTPS), GitHub Actions |
 
-```text
-apps/web/            Next.js 16 / React 19 web app + BFF (HttpOnly-cookie sessions, /api/k proxy)
-services/api/        FastAPI control plane, conversation API, tool broker, Celery outbox worker
-  app/domain/        Canonical capability registry and shared constants (generates TS contracts)
-  alembic/           Migrations: schema (0001) and row-level security + grants (0002)
-  tests/             Integration tests against real PostgreSQL 16 + Redis 7
-infrastructure/      Docker init scripts (Terraform/monitoring not yet written)
-tests/e2e/           Playwright browser smoke test
-docs/                Status, traceability, ADRs, runbook, OpenAPI snapshot, spec
-```
+> **Status:** see [IMPLEMENTATION_PROGRESS.md](IMPLEMENTATION_PROGRESS.md) and [REQUIREMENTS_TRACEABILITY.csv](REQUIREMENTS_TRACEABILITY.csv). Tests use mock/test-double providers. **No live provider (Retell, LLM, ERPNext, Razorpay, Google) has been verified yet — not production-ready.**
 
-## Prerequisites
-
-Python 3.12 with [uv](https://docs.astral.sh/uv/), Node.js 22, PostgreSQL 16 with pgvector, Redis 7. Or Docker
-with Compose v2.
-
-## Quick start with Docker Compose
-
+## Quick start (local, mock voice mode)
 ```bash
-cp .env.example .env            # fill in secrets; keep KOKILA_REASONING_PROVIDER=none until you have a key
-docker compose up --build       # postgres, redis, one-shot migrate job, api, worker, web
-open http://localhost:3000      # register, then sign in
+cp .env.example .env     # set JWT_SECRET and ENCRYPTION_KEY (commands in the file); optionally LLM_PROVIDER/LLM_MODEL/key
+docker compose up --build -d
+SUPERADMIN_PASSWORD='choose-a-long-passphrase' docker compose run --rm -e SUPERADMIN_PASSWORD api \
+  python -m app.cli create-superadmin --email ops@yourdomain.com
+open http://localhost:3000
 ```
+- **Create an account:** http://localhost:3000/signup → you become Company Admin, land on **/overview** with a 14-day trial (Calling Agent inbound + Business Assistant starter).
+- **Super Admin:** sign in with the email/password you set above → **/admin**.
+- No default credentials exist.
 
-The `migrate` service runs `alembic upgrade head && python -m app.cli bootstrap`, which syncs the capability catalog
-and seeds the illustrative plans. Ports are bound to 127.0.0.1 only.
-
-## Local development without Docker
-
+Without Docker:
 ```bash
-# 1. Database roles (once). The app role is NOBYPASSRLS so row-level security always applies.
-sudo -u postgres psql -c "CREATE ROLE kokila_owner LOGIN PASSWORD 'kokila_owner_dev' CREATEDB;" \
-  -c "CREATE ROLE kokila_app LOGIN PASSWORD 'kokila_app_dev' NOSUPERUSER NOBYPASSRLS;" \
-  -c "CREATE DATABASE kokila OWNER kokila_owner;" -c "CREATE DATABASE kokila_test OWNER kokila_owner;"
-sudo -u postgres psql -d kokila -c "CREATE EXTENSION vector;"
-sudo -u postgres psql -d kokila_test -c "CREATE EXTENSION vector;"
-
-# 2. API
-cd services/api
-uv sync --locked
-uv run alembic upgrade head && uv run python -m app.cli bootstrap
-KOKILA_REASONING_PROVIDER=dev_mock uv run uvicorn app.main:app --port 8000   # dev_mock replies are labelled
-uv run celery -A app.worker.celery_app worker -B --loglevel=INFO             # separate terminal
-
-# 3. Web
-cd apps/web && npm ci && KOKILA_API_ORIGIN=http://localhost:8000 npm run dev
+cd backend && python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
+export DATABASE_URL=postgresql+psycopg://kokila:kokila@localhost:5432/kokila REDIS_URL=redis://localhost:6379/0
+.venv/bin/alembic upgrade head && .venv/bin/uvicorn app.main:app --reload        # http://localhost:8000/api/docs
+.venv/bin/celery -A app.workers.celery_app worker -B -l info
+cd ../frontend && npm ci && BACKEND_URL=http://localhost:8000 npm run dev          # http://localhost:3000
 ```
 
-### First Super Admin (one-time)
+## Commands
+| Task | Command |
+|---|---|
+| Backend tests (Postgres + Redis, DB `kokila_test`) | `cd backend && pytest -q` |
+| Lint / types | `ruff check app tests alembic && ruff format --check app tests && mypy app` |
+| Frontend | `cd frontend && npm run lint && npm run typecheck && npm run build` |
+| Migrations | `docker compose run --rm migrate` — see [DATABASE_MIGRATION_GUIDE](docs/DATABASE_MIGRATION_GUIDE.md) |
+| Backup / restore | `scripts/backup.sh`, `scripts/restore.sh <file>` |
 
-```bash
-cd services/api && uv run python -m app.cli create-super-admin --email you@manima.co.in
-```
+## Documentation
+[MASTER_SPECIFICATION](docs/MASTER_SPECIFICATION.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) · [API_DOCUMENTATION](docs/API_DOCUMENTATION.md) · [INTEGRATION_GUIDE](docs/INTEGRATION_GUIDE.md) · [DATABASE_MIGRATION_GUIDE](docs/DATABASE_MIGRATION_GUIDE.md) · [DEPLOYMENT_GUIDE](docs/DEPLOYMENT_GUIDE.md) · [SECURITY_GUIDE](docs/SECURITY_GUIDE.md) · [TELECOM_COMPLIANCE_CHECKLIST](docs/TELECOM_COMPLIANCE_CHECKLIST.md) · [TEST_PLAN](docs/TEST_PLAN.md) · [OPERATIONS_RUNBOOK](docs/OPERATIONS_RUNBOOK.md) · [USER_GUIDE](docs/USER_GUIDE.md) · [SUPER_ADMIN_GUIDE](docs/SUPER_ADMIN_GUIDE.md) · [RELEASE_CHECKLIST](RELEASE_CHECKLIST.md) · detailed flows in `docs/architecture/`.
 
-The command refuses to run if a super admin already exists. Sign in once at `/login`, enrol two-factor
-authentication under **Settings → Security**, then sign in again with **Manima platform administration** ticked and
-your authenticator code. You'll land on `/admin`.
-
-## Reasoning and speech providers
-
-| Path | Configure | Status |
-|---|---|---|
-| Text reasoning | `KOKILA_REASONING_PROVIDER=openai` + `KOKILA_OPENAI_API_KEY` + `KOKILA_OPENAI_MODEL` (or `anthropic`), optional fallback | Adapter code written; **not live-verified** |
-| Browser speech | nothing (Web Speech API; Chrome/Edge recommended) | Working. Audio may be processed by the browser vendor |
-| Realtime WebRTC | `KOKILA_LIVEKIT_*` (room tokens), `KOKILA_OPENAI_REALTIME_MODEL` (ephemeral secrets) | Token issuance written; **client media path not built** |
-| `dev_mock` | `KOKILA_REASONING_PROVIDER=dev_mock` | Development/test only. Rejected at startup in staging/production; every reply is prefixed `[dev mock]` |
-
-With no provider configured, turns return `503 provider_unavailable`. The API never fabricates replies.
-
-## Tests
-
-```bash
-cd services/api && uv run ruff format --check . && uv run ruff check . && uv run mypy app && uv run pytest -q
-cd apps/web && npm run lint && npm run typecheck && npm run build
-# Browser smoke (API on :8000 with dev_mock and a raised KOKILA_RATE_LIMIT_SCALE, web on :3000):
-python tests/e2e/smoke.py --chrome /usr/bin/google-chrome
-```
-
-Last verified run (25 Nov 2026): 41/41 API integration tests passed, ruff/mypy were clean, the web lint, typecheck and
-production build succeeded, and the e2e smoke passed with no console errors.
-
-## Contracts
-
-* `docs/openapi.json` is generated from the running app. CI fails on drift.
-* `apps/web/src/lib/contracts.generated.ts` is generated by `python -m app.cli export-contracts` from
-  `app/domain/*`. Don't edit it by hand.
-
-## Health
-
-* `GET /healthz` checks that the process is alive.
-* `GET /readyz` reports database, schema revision and Redis status, plus whether a reasoning provider is configured. It returns 503 when not ready and never calls paid providers.
+© Manima AI-Tech Solutions · business@manima.co.in

@@ -1,4 +1,0 @@
-# Verified false positives only. Each entry is commit:file:rule:line and exempts exactly one historical finding.
-# a534e53: `idempotency_key=key` passed a local variable named `key` (a tool-run idempotency ref, not a secret).
-# The code was changed in a later commit; this entry only covers that historical commit.
-a534e531fd3d8c84561f7498def67d519bea5b4d:services/api/app/assistant/service.py:generic-api-key:354
