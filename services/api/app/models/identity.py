@@ -66,7 +66,7 @@ class Membership(Base, Timestamps):
     __table_args__ = (
         UniqueConstraint("tenant_id", "user_id", name="uq_memberships_tenant_user"),
         UniqueConstraint("tenant_id", "id", name="uq_memberships_tenant_id_id"),
-        CheckConstraint("role in ('owner','admin','staff','member')", name="role"),
+        CheckConstraint("role in ('owner','admin','manager','staff','member','viewer')", name="role"),
         CheckConstraint("status in ('active','invited','suspended')", name="status"),
         Index("ix_memberships_user", "user_id"),
     )

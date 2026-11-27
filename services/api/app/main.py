@@ -24,7 +24,7 @@ from app.platform.router import router as platform_router
 from app.providers.reasoning import close_reasoning, get_reasoning_router
 from app.tools.router import router as tools_router
 
-EXPECTED_MIGRATION = "0002"
+EXPECTED_MIGRATION = "0003"
 
 
 @asynccontextmanager

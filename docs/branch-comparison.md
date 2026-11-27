@@ -82,16 +82,31 @@ New `Permission` values:
 
 ## Entitlement key mapping
 
-These keys are added to `capability_catalog`. Published keys are immutable, so nothing is renamed.
+Published keys are immutable, so nothing is renamed. The catalog version goes from 1 to 2.
+
+* **Product availability is derived, not stored as a separate key.** This avoids rewriting immutable plan versions.
+  * **Calling Agent** is available when `voice.agents` is effective and the org type is `business`.
+  * **Business Assistant** is available when `assistant.text` is effective.
+  * **Personal Mode** is the `personal` org type.
+  * Locked cards come from this same derivation.
 
 | feature key | main key |
 |---|---|
-| product.calling_agent | **new `product.calling_agent`** (product gate; `voice.*` depend on it) |
-| product.business_assistant | **new `product.business_assistant`** (`assistant.*` depend on it) |
-| assistant.personal | **new `assistant.personal`** → depends on `assistant.text` |
-| KOK-05/06/07 voice | existing `voice.inbound/outbound/agents` |
-| CRM, campaigns, appointments | **new `voice.crm`, `voice.campaigns`, `voice.appointments`** |
-| Connect / ERPNext / Manima Hub | existing `connect.analytics`, `connector.manima`; **new `connector.erpnext`** |
+| product.calling_agent | derived from `voice.agents` |
+| product.business_assistant | derived from `assistant.text` |
+| assistant.personal | `organizations.type = 'personal'` |
+| KOK-05/06/07 | existing `voice.inbound` / `voice.outbound` (campaigns) / `voice.agents` |
+| CRM, leads, consent | **new `voice.crm`** → depends on `voice.agents` |
+| Appointments | **new `voice.appointments`** → depends on `voice.crm` |
+| ERPNext / Manima Hub | **new `connector.erpnext`**, existing `connector.manima` |
+
+Existing installs need new plan versions to grant `voice.crm` or `voice.appointments`, because seeded plans are never mutated. Fresh installs get them in `voice-starter` and `voice-business`.
+
+## Migration hazard found
+
+Migration `0002` builds its RLS policies from the live `TENANT_TABLES` constant in `app/models/base.py`. If that constant is extended, `0002` would silently change meaning on a fresh database.
+
+New tenant tables must not be appended to it. Instead, each new migration carries its own frozen table list and applies the same policy helper.
 
 ## Data and migration strategy
 

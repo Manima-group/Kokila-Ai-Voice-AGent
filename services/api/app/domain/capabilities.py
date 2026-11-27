@@ -121,6 +121,22 @@ _DEFS: Final[tuple[CapabilityDef, ...]] = (
         ("voice.agents",),
         quota_metric="voice.minutes",
     ),
+    CapabilityDef(
+        "voice.crm",
+        "KOK-05",
+        "voice",
+        "Contacts, consent ledger, suppression, leads and activities",
+        Product.VOICE,
+        ("voice.agents",),
+    ),
+    CapabilityDef(
+        "voice.appointments",
+        "KOK-05",
+        "voice",
+        "Appointment booking from calls, calendar availability",
+        Product.VOICE,
+        ("voice.crm",),
+    ),
     # --- Connect --------------------------------------------------------------
     CapabilityDef(
         "connect.embed", "KOK-08", "connect", "SDK, host identity delegation, embeddable widget", Product.CONNECT
@@ -223,6 +239,7 @@ _CONNECTORS: Final[tuple[tuple[str, str], ...]] = (
     ("slack", "Slack"),
     ("n8n", "n8n workflow triggers"),
     ("manima", "Manima Hub / Manima One"),
+    ("erpnext", "ERPNext / Frappe"),
 )
 
 CONNECTOR_DEFS: Final[tuple[CapabilityDef, ...]] = tuple(
@@ -241,7 +258,7 @@ CONNECTOR_DEFS: Final[tuple[CapabilityDef, ...]] = tuple(
 ALL_CAPABILITIES: Final[tuple[CapabilityDef, ...]] = _DEFS + CONNECTOR_DEFS
 CAPABILITIES: Final[dict[str, CapabilityDef]] = {c.key: c for c in ALL_CAPABILITIES}
 INFRASTRUCTURE_KEYS: Final[frozenset[str]] = frozenset(c.key for c in ALL_CAPABILITIES if not c.purchasable)
-CATALOG_VERSION: Final[int] = 1
+CATALOG_VERSION: Final[int] = 2
 
 
 class CapabilityKey(StrEnum):
@@ -257,6 +274,8 @@ class CapabilityKey(StrEnum):
     VOICE_AGENTS = "voice.agents"
     VOICE_INBOUND = "voice.inbound"
     VOICE_OUTBOUND = "voice.outbound"
+    VOICE_CRM = "voice.crm"
+    VOICE_APPOINTMENTS = "voice.appointments"
     CONNECT_EMBED = "connect.embed"
     CONNECT_ANALYTICS = "connect.analytics"
     PLATFORM_ADMIN = "platform.admin"
