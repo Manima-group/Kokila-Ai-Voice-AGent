@@ -16,7 +16,7 @@ Commercial production readiness: **NOT READY** — unchecked items are blocking.
 - [x] 11 Super Admin assigns/revokes capabilities
 - [x] 12 Existing database records preserved (dev upgrade verified)
 - [x] 13 Desktop and mobile layouts (Playwright screenshots)
-- [ ] 14 Docker services build and start — **CI pending** (Docker Hub blocked locally)
+- [x] 14 Docker services build and start (GitHub Actions run 45969809558)
 - [x] 15 Backend and frontend automated tests pass
 - [x] 16 Production frontend build succeeds
 - [x] 17 Mock providers isolated (refused in production)
@@ -30,4 +30,4 @@ Commercial production readiness: **NOT READY** — unchecked items are blocking.
 - [ ] LLM provider + model chosen and verified · [ ] Retell inbound/outbound · [ ] per-language audio tests (te/hi/en) · [ ] ERPNext · [ ] Manima Hub endpoints · [ ] Razorpay test mode · [ ] Google Calendar OAuth · [ ] remaining connectors
 
 ## Operations
-- [ ] Push to GitHub and green CI · [ ] staging deploy · [ ] backups + restore drill · [ ] monitoring/alerts · [ ] load test vs v5.0 §16 targets · [ ] legal/telecom sign-off
+- [x] Push to GitHub and green CI (`feature/unified-platform`) · [ ] staging deploy · [ ] backups + restore drill · [ ] monitoring/alerts · [ ] load test vs v5.0 §16 targets · [ ] legal/telecom sign-off
