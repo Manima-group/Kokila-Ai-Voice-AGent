@@ -10,7 +10,7 @@ Ubuntu 24.04, 4 vCPU / 8 GB RAM minimum, Docker Engine + Compose plugin, ports 8
 git clone https://github.com/Manima-group/Kokila-Ai-Voice-AGent.git kokila && cd kokila
 cp .env.example .env && chmod 600 .env
 ```
-Set: `ENVIRONMENT=production`, `COOKIE_SECURE=true`, `PUBLIC_BASE_URL=https://$API_DOMAIN`, `FRONTEND_URL=https://$APP_DOMAIN`, `CORS_ORIGINS=["https://$APP_DOMAIN"]`, strong `POSTGRES_PASSWORD`, `JWT_SECRET` (≥32 chars), `ENCRYPTION_KEY` (Fernet), `VOICE_PROVIDER=retell`, `RETELL_API_KEY`, Razorpay keys + webhook secret, Google OAuth client (redirect `https://$API_DOMAIN/api/v1/integrations/google/callback`), SMTP. Prefer a secret manager (e.g. AWS SSM / Doppler) that renders `.env` at deploy time. **Back up `ENCRYPTION_KEY` separately** — losing it makes stored provider credentials unreadable.
+Set: `LLM_PROVIDER` + `LLM_MODEL` + the matching API key (Business Assistant chat), `ENVIRONMENT=production`, `COOKIE_SECURE=true`, `PUBLIC_BASE_URL=https://$API_DOMAIN`, `FRONTEND_URL=https://$APP_DOMAIN`, `CORS_ORIGINS=["https://$APP_DOMAIN"]`, strong `POSTGRES_PASSWORD`, `JWT_SECRET` (≥32 chars), `ENCRYPTION_KEY` (Fernet), `VOICE_PROVIDER=retell`, `RETELL_API_KEY`, Razorpay keys + webhook secret, Google OAuth client (redirect `https://$API_DOMAIN/api/v1/integrations/google/callback`), SMTP. Prefer a secret manager (e.g. AWS SSM / Doppler) that renders `.env` at deploy time. **Back up `ENCRYPTION_KEY` separately** — losing it makes stored provider credentials unreadable.
 
 ## 3. Start
 ```bash

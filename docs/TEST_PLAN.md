@@ -14,7 +14,9 @@ Runs against real PostgreSQL 16 + Redis. Each run validates migrations `upgrade 
 | Billing | GST checkout, invalid/valid client signature, no activation from browser, webhook bad signature 401, activation + invoice, duplicate webhook, subscription expiry → 402, minutes exhausted |
 | CRM/Admin | CSV import (dupes, invalid rows, consent without evidence), search/tags, suppression removal rules, erasure, tasks, signed outbox delivery + failure backoff, super admin plans/compliance/kill switch/suspend/audit, analytics from stored data |
 
-Frontend: ESLint, `tsc --noEmit`, `next build` in CI. End-to-end browser smoke (Playwright, manual run): login → create agent → publish → simulate call → call detail; mobile viewport check.
+| Unified platform (27 Nov) | product entitlements on API (calling-only, assistant-only, both), Super Admin revision/dependency conflicts, cascade, platform capability kill switch, plan packages, ERPNext verify/failed creds/metrics math/returns/outstanding/low stock/compare, connector tenant isolation, revoke, planned connectors cannot be connected, assistant without LLM (503), business answers only from tool data (no data → error reported), approval hash binding + single execution, personal isolation from colleagues, memory approval, reminders → notifications, custom-name entitlement + input validation |
+
+Frontend: ESLint, `tsc --noEmit`, `next build` in CI. End-to-end browser checks (Playwright, run manually 27 Nov): signup → /overview; open each product; old URL redirect; Super Admin locks Calling Agent → locked card + locked direct URL; ERPNext connect via UI against a local test double → quick report renders KPIs/chart; mobile overview. Not yet in CI.
 
 ## Live provider verification — PENDING (requires credentials)
 Run on staging with test accounts and record results in IMPLEMENTATION_PROGRESS.md:

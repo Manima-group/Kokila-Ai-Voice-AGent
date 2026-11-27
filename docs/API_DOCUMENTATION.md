@@ -1,37 +1,36 @@
 # API Documentation
 
-Base path `/api/v1`. Interactive docs: `GET /api/docs` (Swagger UI); machine-readable spec: `docs/api/openapi.json`.
+Base path `/api/v1`. Swagger UI: `GET /api/docs`. Machine-readable spec: `docs/openapi.json` (regenerate after route changes).
 
 ## Conventions
 
-- **Auth:** `Authorization: Bearer <access_token>` (15 min). Refresh via `POST /auth/refresh` using the httpOnly `kokila_refresh` cookie (rotated on every use; reuse revokes the token family).
-- **Tenant:** `X-Tenant-ID: <uuid>` — validated server-side against the caller's active membership. Required when a user belongs to more than one organization.
-- **Errors:** `{"error": {"code": "...", "message": "..."}}` with HTTP 400/401/402/403/404/409/422/429/502/503. Other tenants' resources return 404.
-- **Pagination:** `?limit=&offset=` (max 200) → `{items, total, limit, offset}`.
-- **Webhooks (inbound):** `/webhooks/retell` (+ `/accounts/{id}` for tenant-owned Retell keys), `/webhooks/retell/tools/{tool}`, `/webhooks/razorpay`. All require valid provider signatures.
-- **Webhooks (outbound):** Kokila signs deliveries: `X-Kokila-Signature: sha256=HMAC_SHA256(secret, "{X-Kokila-Timestamp}." + body)`.
+- **Auth:** `Authorization: Bearer <access_token>` (15 min); refresh with `POST /auth/refresh` using the httpOnly `kokila_refresh` cookie (rotated; reuse revokes the family).
+- **Tenant:** `X-Tenant-ID` validated against the caller's membership. Personal-assistant data is additionally scoped to the user.
+- **Entitlements:** product/feature routes return `403 capability_disabled` when the organization is not licensed, `402 subscription_inactive` when the subscription lapsed. `GET /me/capabilities` lists effective capabilities.
+- **Errors:** `{"error": {"code", "message"}}`; foreign resources return 404.
+- **Pagination:** `limit`/`offset` (max 200) → `{items,total,limit,offset}`.
+- **Webhooks in:** `/webhooks/retell[/accounts/{id}]`, `/webhooks/retell/tools/{tool}`, `/webhooks/razorpay` (signature required). **Out:** `X-Kokila-Signature: sha256=HMAC(secret, ts + '.' + body)`.
 
-## Examples
+## Key flows
 
 ```bash
-# Register (creates organization + COMPANY_ADMIN + 14-day trial)
-curl -X POST $API/api/v1/auth/register -H 'content-type: application/json' \
-  -d '{"company_name":"Acme Realty","full_name":"Asha","email":"asha@acme.in","password":"Str0ngPassw0rd"}'
+# Product access for the signed-in organization
+curl $API/api/v1/me/capabilities -H "Authorization: Bearer $T" -H "X-Tenant-ID: $TENANT"
 
-# Create an agent from a template
-curl -X POST $API/api/v1/agents -H "Authorization: Bearer $TOKEN" -H 'content-type: application/json' \
-  -d '{"name":"Sales Desk","template":"real_estate"}'
+# Connect ERPNext (verified live before it counts as connected)
+curl -X POST $API/api/v1/connect/connections -H "Authorization: Bearer $T" -H 'content-type: application/json' \
+  -d '{"connector_key":"erpnext","name":"Main ERP","base_url":"https://erp.example.com","credentials":{"api_key":"…","api_secret":"…"}}'
 
-# Publish version 1 (syncs to the voice provider)
-curl -X POST $API/api/v1/agents/$AGENT/versions/1/publish -H "Authorization: Bearer $TOKEN"
+# Run a governed metric (no LLM needed)
+curl -X POST $API/api/v1/connect/metrics/run -H "Authorization: Bearer $T" -H 'content-type: application/json' \
+  -d '{"metric_key":"erpnext.sales_total","params":{"date_from":"2026-11-01","date_to":"2026-11-27"}}'
 
-# Record consent, then start a campaign
-curl -X POST $API/api/v1/contacts/$CONTACT/consents -H "Authorization: Bearer $TOKEN" -H 'content-type: application/json' \
-  -d '{"purpose":"sales","source":"web_form","evidence":"Form #4411, 2026-11-01"}'
-curl -X POST $API/api/v1/campaigns/$CAMPAIGN/start -H "Authorization: Bearer $TOKEN"
+# Super Admin: give a client the Business Assistant only
+curl -X PATCH $API/api/v1/admin/tenants/$TENANT/capabilities -H "Authorization: Bearer $ROOT" -H 'content-type: application/json' \
+  -d '{"changes":[{"key":"product.calling_agent","enabled":false}],"expected_revision":1,"reason":"Assistant-only contract"}'
 ```
 
-## Endpoints
+## Endpoints (144 operations)
 
 
 ### admin
@@ -87,6 +86,27 @@ curl -X POST $API/api/v1/campaigns/$CAMPAIGN/start -H "Authorization: Bearer $TO
 | POST | `/api/v1/appointments/{appointment_id}/reschedule` | Reschedule Appointment |
 | GET | `/api/v1/calendar-connections` | List Connections |
 | POST | `/api/v1/calendar-connections` | Create Internal |
+
+### assistant
+
+| Method | Path | Summary |
+|---|---|---|
+| GET | `/api/v1/assistant/actions` | Actions |
+| POST | `/api/v1/assistant/actions/{aid}/decision` | Decide |
+| GET | `/api/v1/assistant/config` | Config |
+| GET | `/api/v1/assistant/conversations` | Conversations |
+| POST | `/api/v1/assistant/conversations` | New Conversation |
+| DELETE | `/api/v1/assistant/conversations/{cid}` | Delete Conversation |
+| GET | `/api/v1/assistant/conversations/{cid}/messages` | Messages |
+| POST | `/api/v1/assistant/conversations/{cid}/messages` | Send |
+| GET | `/api/v1/assistant/memory` | Memory |
+| POST | `/api/v1/assistant/memory` | Add Memory |
+| DELETE | `/api/v1/assistant/memory/{mid}` | Delete Memory |
+| POST | `/api/v1/assistant/memory/{mid}/approve` | Approve Memory |
+| PATCH | `/api/v1/assistant/preferences` | Update Prefs |
+| GET | `/api/v1/assistant/reminders` | Reminders |
+| POST | `/api/v1/assistant/reminders` | Add Reminder |
+| POST | `/api/v1/assistant/reminders/{rid}/cancel` | Cancel Reminder |
 
 ### audit
 
@@ -147,6 +167,18 @@ curl -X POST $API/api/v1/campaigns/$CAMPAIGN/start -H "Authorization: Bearer $TO
 | POST | `/api/v1/campaigns/{campaign_id}/resume` | Resume |
 | POST | `/api/v1/campaigns/{campaign_id}/start` | Start |
 
+### connect
+
+| Method | Path | Summary |
+|---|---|---|
+| GET | `/api/v1/connect/connections` | List Connections |
+| POST | `/api/v1/connect/connections` | Create Connection |
+| POST | `/api/v1/connect/connections/{connection_id}/revoke` | Revoke |
+| POST | `/api/v1/connect/connections/{connection_id}/verify` | Verify |
+| GET | `/api/v1/connect/connectors` | Connectors |
+| GET | `/api/v1/connect/metrics` | Metrics |
+| POST | `/api/v1/connect/metrics/run` | Run |
+
 ### contacts
 
 | Method | Path | Summary |
@@ -187,6 +219,13 @@ curl -X POST $API/api/v1/campaigns/$CAMPAIGN/start -H "Authorization: Bearer $TO
 | POST | `/api/v1/leads/{lead_id}/activities/{activity_id}/complete` | Complete Task |
 | POST | `/api/v1/leads/{lead_id}/assign` | Assign |
 
+### notifications
+
+| Method | Path | Summary |
+|---|---|---|
+| GET | `/api/v1/notifications` | List Notifications |
+| POST | `/api/v1/notifications/read-all` | Read All |
+
 ### ops
 
 | Method | Path | Summary |
@@ -206,6 +245,18 @@ curl -X POST $API/api/v1/campaigns/$CAMPAIGN/start -H "Authorization: Bearer $TO
 | POST | `/api/v1/users` | Invite |
 | POST | `/api/v1/users/{user_id}/deactivate` | Deactivate |
 | PATCH | `/api/v1/users/{user_id}/role` | Change Role |
+
+### platform
+
+| Method | Path | Summary |
+|---|---|---|
+| GET | `/api/v1/admin/capabilities` | Catalog |
+| PUT | `/api/v1/admin/capabilities/{key}/control` | Set Control |
+| GET | `/api/v1/admin/plans/{code}/capabilities` | Plan Caps |
+| PUT | `/api/v1/admin/plans/{code}/capabilities` | Set Plan Caps |
+| GET | `/api/v1/admin/tenants/{tenant_id}/capabilities` | Tenant Caps |
+| PATCH | `/api/v1/admin/tenants/{tenant_id}/capabilities` | Update Tenant Caps |
+| GET | `/api/v1/me/capabilities` | My Capabilities |
 
 ### telephony
 

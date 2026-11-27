@@ -1,10 +1,8 @@
 # Database Schema
 
-Generated from SQLAlchemy metadata (`app/db/models.py`). Migrations: `backend/alembic/versions`.
+Generated from SQLAlchemy metadata. Migrations: `backend/alembic/versions` (0001 schema, 0002 trial plan, 0003 capabilities, 0004 Connect + Assistant).
 
-Additional constraints created in migration 0001: `btree_gist` extension; `ex_appointments_no_overlap` EXCLUDE constraint (no overlapping active appointments per calendar); `ck_appointments_time`; partial unique index `uq_subscriptions_current` (one current subscription per tenant); campaign attempt/concurrency CHECKs.
-
-Tenant-owned tables carry a non-null indexed `tenant_id`. `webhook_events`, `outbox_events` and `audit_logs` have a nullable `tenant_id` (resolved after verification / platform-level actions). `plans` and `platform_settings` are platform-wide.
+Extra constraints from migrations: `btree_gist` + `ex_appointments_no_overlap`, `ck_appointments_time`, partial unique `uq_subscriptions_current`, campaign CHECKs.
 
 
 ## agent_tools
@@ -20,8 +18,6 @@ Tenant-owned tables carry a non-null indexed `tenant_id`. `webhook_events`, `out
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
 
-Composite unique: (agent_id, name)
-
 ## agent_versions
 
 | Column | Type | Null | Notes |
@@ -35,8 +31,6 @@ Composite unique: (agent_id, name)
 | created_at | DATETIME | no |  |
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
-
-Composite unique: (agent_id, version)
 
 ## agents
 
@@ -57,8 +51,6 @@ Composite unique: (agent_id, version)
 | created_at | DATETIME | no |  |
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
-
-Composite unique: (tenant_id, name)
 
 ## appointments
 
@@ -82,7 +74,68 @@ Composite unique: (tenant_id, name)
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
 
-Composite unique: (tenant_id, idempotency_key)
+## assistant_actions
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| user_id | UUID | no | FK → users.id, indexed |
+| conversation_id | UUID | yes |  |
+| tool_key | VARCHAR(60) | no |  |
+| args | JSONB | no |  |
+| args_hash | VARCHAR(64) | no |  |
+| summary | TEXT | no |  |
+| status | VARCHAR(20) | no |  |
+| result | JSONB | no |  |
+| decided_at | DATETIME | yes |  |
+| id | UUID | no | PK |
+| created_at | DATETIME | no |  |
+| updated_at | DATETIME | no |  |
+| tenant_id | UUID | no | FK → tenants.id, indexed |
+
+## assistant_conversations
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| user_id | UUID | no | FK → users.id, indexed |
+| mode | VARCHAR(20) | no |  |
+| title | VARCHAR(200) | no |  |
+| status | VARCHAR(20) | no |  |
+| id | UUID | no | PK |
+| created_at | DATETIME | no |  |
+| updated_at | DATETIME | no |  |
+| tenant_id | UUID | no | FK → tenants.id, indexed |
+
+## assistant_messages
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| conversation_id | UUID | no | FK → assistant_conversations.id, indexed |
+| user_id | UUID | no | FK → users.id, indexed |
+| role | VARCHAR(20) | no |  |
+| content | TEXT | no |  |
+| artifacts | JSONB | no |  |
+| provider | VARCHAR(30) | yes |  |
+| model | VARCHAR(80) | yes |  |
+| language | VARCHAR(10) | yes |  |
+| id | UUID | no | PK |
+| created_at | DATETIME | no |  |
+| updated_at | DATETIME | no |  |
+| tenant_id | UUID | no | FK → tenants.id, indexed |
+
+## assistant_preferences
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| user_id | UUID | no | FK → users.id, indexed |
+| assistant_name | VARCHAR(40) | no |  |
+| language | VARCHAR(10) | no |  |
+| voice_name | VARCHAR(120) | yes |  |
+| wake_phrase | VARCHAR(60) | yes |  |
+| response_length | VARCHAR(10) | no |  |
+| id | UUID | no | PK |
+| created_at | DATETIME | no |  |
+| updated_at | DATETIME | no |  |
+| tenant_id | UUID | no | FK → tenants.id, indexed |
 
 ## audit_logs
 
@@ -151,8 +204,6 @@ Composite unique: (tenant_id, idempotency_key)
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
 
-Composite unique: (campaign_contact_id, attempt_no)
-
 ## call_events
 
 | Column | Type | Null | Notes |
@@ -220,8 +271,6 @@ Composite unique: (campaign_contact_id, attempt_no)
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
 
-Composite unique: (provider, provider_call_id)
-
 ## campaign_contacts
 
 | Column | Type | Null | Notes |
@@ -237,8 +286,6 @@ Composite unique: (provider, provider_call_id)
 | created_at | DATETIME | no |  |
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
-
-Composite unique: (campaign_id, contact_id)
 
 ## campaigns
 
@@ -259,6 +306,26 @@ Composite unique: (campaign_id, contact_id)
 | start_at | DATETIME | yes |  |
 | end_at | DATETIME | yes |  |
 | description | TEXT | yes |  |
+| id | UUID | no | PK |
+| created_at | DATETIME | no |  |
+| updated_at | DATETIME | no |  |
+| tenant_id | UUID | no | FK → tenants.id, indexed |
+
+## connector_connections
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| connector_key | VARCHAR(40) | no | indexed |
+| name | VARCHAR(120) | no |  |
+| base_url | TEXT | yes |  |
+| encrypted_credentials | TEXT | yes |  |
+| scopes | JSONB | no |  |
+| read_only | BOOLEAN | no |  |
+| status | VARCHAR(20) | no |  |
+| last_verified_at | DATETIME | yes |  |
+| last_error | TEXT | yes |  |
+| verified_identity | VARCHAR(200) | yes |  |
+| created_by | UUID | yes |  |
 | id | UUID | no | PK |
 | created_at | DATETIME | no |  |
 | updated_at | DATETIME | no |  |
@@ -299,8 +366,6 @@ Composite unique: (campaign_id, contact_id)
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
 
-Composite unique: (tenant_id, phone_e164)
-
 ## data_retention_policies
 
 | Column | Type | Null | Notes |
@@ -311,8 +376,6 @@ Composite unique: (tenant_id, phone_e164)
 | created_at | DATETIME | no |  |
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
-
-Composite unique: (tenant_id, resource)
 
 ## deletion_requests
 
@@ -426,6 +489,35 @@ Composite unique: (tenant_id, resource)
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
 
+## memory_items
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| user_id | UUID | no | FK → users.id, indexed |
+| scope | VARCHAR(20) | no |  |
+| content | TEXT | no |  |
+| status | VARCHAR(20) | no |  |
+| source_message_id | UUID | yes |  |
+| id | UUID | no | PK |
+| created_at | DATETIME | no |  |
+| updated_at | DATETIME | no |  |
+| tenant_id | UUID | no | FK → tenants.id, indexed |
+
+## notifications
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| user_id | UUID | yes | FK → users.id, indexed |
+| kind | VARCHAR(40) | no |  |
+| title | VARCHAR(200) | no |  |
+| body | TEXT | yes |  |
+| link | VARCHAR(300) | yes |  |
+| read_at | DATETIME | yes |  |
+| id | UUID | no | PK |
+| created_at | DATETIME | no |  |
+| updated_at | DATETIME | no |  |
+| tenant_id | UUID | no | FK → tenants.id, indexed |
+
 ## outbox_events
 
 | Column | Type | Null | Notes |
@@ -477,7 +569,16 @@ Composite unique: (tenant_id, resource)
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
 
-Composite unique: (route_key, e164)
+## plan_capabilities
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| plan_id | UUID | no | PK, FK → plans.id |
+| capability_key | VARCHAR(60) | no | PK |
+| enabled | BOOLEAN | no |  |
+| limits | JSONB | no |  |
+| created_at | DATETIME | no |  |
+| updated_at | DATETIME | no |  |
 
 ## plans
 
@@ -497,6 +598,18 @@ Composite unique: (route_key, e164)
 | is_active | BOOLEAN | no |  |
 | is_public | BOOLEAN | no |  |
 | id | UUID | no | PK |
+| created_at | DATETIME | no |  |
+| updated_at | DATETIME | no |  |
+
+## platform_capability_controls
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| capability_key | VARCHAR(60) | no | PK |
+| enabled | BOOLEAN | no |  |
+| reason | TEXT | yes |  |
+| revision | INTEGER | no |  |
+| updated_by | UUID | yes |  |
 | created_at | DATETIME | no |  |
 | updated_at | DATETIME | no |  |
 
@@ -536,6 +649,19 @@ Composite unique: (route_key, e164)
 | created_at | DATETIME | no |  |
 | updated_at | DATETIME | no |  |
 
+## reminders
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| user_id | UUID | no | FK → users.id, indexed |
+| text | TEXT | no |  |
+| due_at | DATETIME | no | indexed |
+| status | VARCHAR(20) | no |  |
+| id | UUID | no | PK |
+| created_at | DATETIME | no |  |
+| updated_at | DATETIME | no |  |
+| tenant_id | UUID | no | FK → tenants.id, indexed |
+
 ## subscriptions
 
 | Column | Type | Null | Notes |
@@ -564,7 +690,19 @@ Composite unique: (route_key, e164)
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
 
-Composite unique: (tenant_id, phone_e164)
+## tenant_capability_overrides
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| tenant_id | UUID | no | PK, FK → tenants.id |
+| capability_key | VARCHAR(60) | no | PK |
+| enabled | BOOLEAN | no |  |
+| limits | JSONB | no |  |
+| expires_at | DATETIME | yes |  |
+| reason | TEXT | no |  |
+| updated_by | UUID | yes |  |
+| created_at | DATETIME | no |  |
+| updated_at | DATETIME | no |  |
 
 ## tenant_memberships
 
@@ -578,8 +716,6 @@ Composite unique: (tenant_id, phone_e164)
 | created_at | DATETIME | no |  |
 | updated_at | DATETIME | no |  |
 
-Composite unique: (tenant_id, user_id)
-
 ## tenants
 
 | Column | Type | Null | Notes |
@@ -590,6 +726,7 @@ Composite unique: (tenant_id, user_id)
 | timezone | VARCHAR(64) | no |  |
 | industry | VARCHAR(80) | yes |  |
 | outbound_paused | BOOLEAN | no |  |
+| policy_revision | INTEGER | no |  |
 | compliance | JSONB | no |  |
 | settings | JSONB | no |  |
 | id | UUID | no | PK |
@@ -610,8 +747,6 @@ Composite unique: (tenant_id, user_id)
 | created_at | DATETIME | no |  |
 | updated_at | DATETIME | no |  |
 | tenant_id | UUID | no | FK → tenants.id, indexed |
-
-Composite unique: (call_id, kind)
 
 ## users
 

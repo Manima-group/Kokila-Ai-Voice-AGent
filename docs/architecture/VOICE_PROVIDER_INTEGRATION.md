@@ -17,7 +17,7 @@ Deterministic, offline, refuses to run when `ENVIRONMENT=production`. Emits Rete
 `POST /api/v1/provider-accounts` stores a tenant's Retell key encrypted (Fernet). Numbers on that account use route key `retell:<account_id>` and webhooks at `/webhooks/retell/accounts/{id}` (verified with that tenant's key).
 
 ## Live verification status — PENDING
-Requires a Retell account and an Indian DID. Run the checklist in `docs/runbooks/TEST_PLAN.md §Live provider` before enabling any language for production.
+Requires a Retell account and an Indian DID. Run the checklist in `docs/TEST_PLAN.md §Live provider` before enabling any language for production.
 
 ## Adding LiveKit/SIP later
 Implement `VoiceProvider`, register it in `voice/registry.py`, add its name to `VOICE_PROVIDERS` in `calls/webhooks.py`, and map its events to `NormalizedEvent`.

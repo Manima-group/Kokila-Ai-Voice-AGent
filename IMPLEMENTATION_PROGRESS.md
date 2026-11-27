@@ -1,57 +1,45 @@
 # Implementation Progress
 
-Last updated: 2026-11-17. Source of truth for resuming work. Only results that were actually executed are recorded.
+Last updated: 27 Nov 2026 · branch `feature/unified-platform` (local; **not pushed** — see blockers). Only executed results are recorded.
 
 ## Verification evidence (this checkpoint)
 | Check | Command | Result |
 |---|---|---|
-| Backend tests | `cd backend && pytest -q` (PostgreSQL 16.15, Redis 7.0) | **43 passed, 0 failed** |
-| Migrations | upgrade → downgrade → upgrade on every test run | passed |
-| Lint / format | `ruff check app tests alembic`, `ruff format --check` | passed |
-| Types | `mypy app` | no issues (77 files) |
-| Dependency audit (backend) | `pip-audit` | only the local venv's `pip 24.0` flagged (CI upgrades pip) |
-| Frontend | `npm run lint` / `typecheck` / `next build` | 0 errors (1 known react-hook-form `watch` warning) / pass / pass (27 routes) |
-| Dependency audit (frontend) | `npm audit --omit=dev --audit-level=high` | 0 vulnerabilities |
-| API + web smoke | uvicorn + `next start`: register → refresh cookie via Next rewrite → dashboard | passed |
-| Browser E2E (Playwright, manual) | login → create agent → publish → simulate call → call detail → mobile contacts | passed; only expected 401s from the pre-login refresh probe |
-| Celery | `celery worker -B` started, `kokila.process_outbox` executed | passed |
-| Compose file | `docker compose config` | valid |
-| Docker image build | `docker compose build` | **NOT VERIFIED here** — Docker Hub is blocked in this build environment (403). CI `docker` job builds images and smoke-tests the stack. |
+| Backend tests | `cd backend && pytest -q` (PostgreSQL 16, Redis 7) | **52 passed, 0 failed** (43 existing + 9 new) |
+| Migrations | upgrade → downgrade → upgrade per test run; `alembic check` | pass; no drift |
+| Existing data | dev DB upgraded from 17 Nov state | existing tenant kept Calling Agent access (9 capabilities) |
+| Lint / format / types | `ruff check`, `ruff format --check`, `mypy app` | pass (93 files) |
+| Frontend | `npm run lint` / `tsc --noEmit` / `next build` | 0 errors (1 known react-hook-form warning) / pass / pass (33 routes) |
+| Browser E2E (Playwright, manual) | signup → /overview; product cards; Calling Agent; Business Assistant; old URL redirect; Super Admin locks Calling Agent → locked card + locked direct URL; ERPNext connect via UI against local test double → Sales quick report; mobile | pass, no page errors |
+| Docker images | `docker compose build` | **not run here** (Docker Hub blocked in this environment); CI `docker` job builds and smoke-tests |
 
-## Phase status
-| Phase | Status | Notes |
-|---|---|---|
-| 1 Foundation & infrastructure | ✅ | Repo layout, settings with production guard, DB/Redis, health/ready, Dockerfiles, compose, CI |
-| 2 Auth, tenants, RBAC | ✅ | argon2, JWT + rotating refresh cookie, lockout, memberships, 4 roles + super admin, isolation tests |
-| 3 Agents & provider abstraction | ✅ | 6 templates, versioned config, publish/sync, knowledge base with injection flagging, Retell + Mock adapters |
-| 4 Inbound voice | ✅ mock / ⏳ live | Signed webhooks, inbound routing, state machine, tools, transcripts |
-| 5 CRM & lead processing | ✅ | Contacts, CSV import, consent, suppression, leads, tasks, assignment, deterministic outcome rules |
-| 6 Scheduling, integrations, escalation | ✅ mock / ⏳ live Google | Internal + Google calendar adapters, overlap exclusion, reconciliation, handoff, signed outbox webhooks/n8n |
-| 7 Outbound campaigns & compliance | ✅ mock / ⏳ live | Consent gating, legal window, caller-ID series, kill switches, retries, idempotent dispatch |
-| 8 Billing & usage | ✅ mock / ⏳ live Razorpay | Plans, entitlements, usage metering, checkout, webhook activation, GST invoices |
-| 9 Dashboards, analytics, admin | ✅ | Real-data analytics, super admin console, audit, retention, erasure |
-| 10 Security, testing, deployment | 🟡 | Docs, CI, Caddy HTTPS, backups written; live-provider, load and image-build verification pending |
+Bugs found and fixed during verification: reports' "this month" started a day early (browser UTC conversion) and the same pattern in appointments; Super Admin CLI accepted `.local` emails that login rejected.
 
-## Blockers / pending external verification
-1. **GitHub push not performed.** Attaching the repository with write access was denied by this session's permission policy, so nothing has been pushed. All work is committed locally on `main` (see `git log`). Owner action: grant push access (or push the provided bundle) — see final report.
-2. **Retell live tests** — need `RETELL_API_KEY`, an Indian DID, and test phones.
-3. **Telugu** — `te-IN` is not in retell-sdk's language list; needs custom STT or another provider before it can be offered.
-4. **Razorpay test-mode run** — need test keys + webhook secret and a public HTTPS URL.
-5. **Google Calendar OAuth** — need OAuth client + verified redirect URI.
-6. **Docker image build/run** — verify in CI or on a host with Docker Hub access.
-7. **Compliance** — legal review of TCCCPR/DLT/DPDP obligations (see TELECOM_COMPLIANCE_CHECKLIST.md).
+## Delivered in the unified-platform milestone
+- **Licensing:** capability registry (products + KOK-01…20 + personal mode), plan packages, tenant overrides, platform kill switches, dependency validation with cascade, revision checks, audit; enforced on every API surface; `/me/capabilities`.
+- **Overview** product chooser (reference design), platform/contextual navigation, product switcher, notifications, profile; locked states; route redirects.
+- **Calling Agent** workspace (all previous features preserved under `/calling-agent`).
+- **Business Assistant:** business + personal modes, LLM adapters (OpenAI/Anthropic, explicit model), tool loop, approvals bound to argument hash, user-approved memory, reminders → notifications, preferences (name/language/wake phrase gated by `assistant.identity`), browser voice with mic/speaker mute and barge-in, quick reports without LLM.
+- **Kokila Connect:** 14-connector catalog, encrypted verified connections, ERPNext and Manima Hub adapters, governed metrics with provenance, SSRF guard, integrations UI.
+- **Super Admin:** per-tenant Products & features matrix.
+- **Docs:** ARCHITECTURE, MASTER_SPECIFICATION, DATABASE_MIGRATION_GUIDE, INTEGRATION_GUIDE, USER_GUIDE, SUPER_ADMIN_GUIDE, API (144 operations), SECURITY_GUIDE, TEST_PLAN, traceability CSV.
 
-## Known issues / limitations
-- PostgreSQL RLS not enabled (application-level isolation, tested).
-- OpenTelemetry tracing not wired yet (structured JSON logs + health endpoints only).
-- No MFA, password-reset email, or email delivery of invites (temporary password shown once).
-- Recordings are provider URLs; no Kokila object storage/signed URLs.
-- Provider cost in USD cents; no FX conversion/margin report.
-- Rate limiter fails open when Redis is unavailable.
-- Reference repo `gmohanasriram-wq/ai-business-dispatcher` was **not inspected or copied**; Kokila is an independent implementation (no MIT attribution required).
-- Frontend has no automated component/E2E test suite in CI yet (manual Playwright smoke only).
+## Traceability summary (`REQUIREMENTS_TRACEABILITY.csv`, 50 rows)
+implemented_tested 15 · implemented 2 · mock_verified 9 · partial 7 · blocked 5 · not_started 12.
+
+## Blockers (external)
+1. **GitHub push** — this session was denied write access to `Manima-group/Kokila-Ai-Voice-AGent`; all commits are local. Owner must push (bundle provided) or grant access.
+2. **LLM** — no OpenAI/Anthropic key or chosen model; Business Assistant chat returns "not configured" (quick reports work).
+3. **Realtime voice** — LiveKit / OpenAI Realtime / Deepgram / ElevenLabs not evaluated (no accounts); no Telugu/Hindi/English audio benchmarks; Retell lacks Telugu.
+4. **Connectors** — live ERPNext instance; Manima Hub must implement `/kokila/v1` endpoints; Zoho, Tally, Salesforce, SAP, Dynamics, Gmail, Outlook, WhatsApp, Teams, Slack need vendor sandboxes/OAuth apps.
+5. **Retell, Razorpay, Google** live verification; Brave key for research.
+6. **Docker image build** — verify in CI or a host with Docker Hub access.
+7. Legal review (TRAI/DLT/DPDP) and independent penetration test.
+
+## Not started (independent work remaining)
+PostgreSQL RLS · MFA + password reset · pgvector RAG and feedback review · vision/documents · meetings · proactive alerts · visual workflow builder · embeddable SDK/widget · private deployment · marketplace · Terraform · XLSX/PDF exports · Playwright E2E in CI · OpenTelemetry.
 
 ## Next actions
-1. Push to GitHub and confirm CI (incl. docker job) is green.
-2. Staging deploy with Retell/Razorpay/Google test credentials; run TEST_PLAN §Live provider and record results here.
-3. Add OpenTelemetry, Playwright E2E in CI, MFA, password reset.
+1. Push branch, open PR, confirm CI green.
+2. Provide LLM provider + model + key and an ERPNext test site → run live verification and record here.
+3. Implement RLS, MFA/password reset, pgvector knowledge retrieval, then the remaining v5.0 modules in traceability order.
