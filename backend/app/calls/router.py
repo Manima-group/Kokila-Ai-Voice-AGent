@@ -8,20 +8,21 @@ from sqlalchemy.orm import Session
 
 from app.agents.models import Agent
 from app.audit.service import audit_ctx
-from app.auth.deps import TenantContext, get_owned, require
+from app.auth.deps import TenantContext, get_owned, require, require_capability
 from app.billing.service import check_call_allowed
 from app.calls.service import TERMINAL, apply_event
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.core.phone import mask_phone, normalize_e164
 from app.db.session import get_db
+from app.platform.registry import PRODUCT_CALLING_AGENT
 from app.schemas.common import ORM, paginate
 from app.telephony.models import Call, CallEvent
 from app.voice.base import ProviderError
 from app.voice.providers.mock import MockVoiceProvider
 from app.voice.registry import get_provider
 
-router = APIRouter(prefix="/calls", tags=["calls"])
+router = APIRouter(prefix="/calls", tags=["calls"], dependencies=[Depends(require_capability(PRODUCT_CALLING_AGENT, "voice.agents"))])
 
 
 class CallOut(ORM):

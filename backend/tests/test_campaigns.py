@@ -57,9 +57,10 @@ def test_missing_consent_blocks_start(client, db):
 
 
 def test_plan_without_outbound_blocks(client, db):
-    h, _, camp, _ = _setup(client, db, outbound=False)
-    r = client.post(f"/api/v1/campaigns/{camp['id']}/start", headers=h)
-    assert r.status_code == 402
+    h, tid, _ = register(client)
+    grant_plan(db, tid, outbound=False)
+    r = client.get("/api/v1/campaigns", headers=h)
+    assert r.status_code == 403 and r.json()["error"]["code"] == "capability_disabled"
 
 
 def test_dispatch_flow_suppression_retry_and_dedupe(client, db):
@@ -184,7 +185,8 @@ def test_window_and_compliance_rules(client, db):
 
 def test_cross_tenant_campaign_contacts_rejected(client, db):
     h, tid, camp, _ = _setup(client, db)
-    other_h, _, _ = register(client, "Other")
+    other_h, other_tid, _ = register(client, "Other")
+    grant_plan(db, other_tid, code="other_plan")
     foreign = client.post("/api/v1/contacts", json={"phone": "9811100000"}, headers=other_h).json()
     r = client.post(f"/api/v1/campaigns/{camp['id']}/contacts", json={"contact_ids": [foreign["id"]]}, headers=h).json()
     assert r["added"] == 0 and r["ignored"] == 1

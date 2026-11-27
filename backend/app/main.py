@@ -7,6 +7,8 @@ from app.admin.router import router as admin_router
 from app.agents.router import router as agents_router
 from app.analytics.router import router as analytics_router
 from app.appointments.router import router as appointments_router
+from app.assistant.router import notifications_router
+from app.assistant.router import router as assistant_router
 from app.audit.router import router as audit_router
 from app.auth.router import router as auth_router
 from app.billing.router import router as billing_router
@@ -14,6 +16,7 @@ from app.billing.router import webhook_router as billing_webhook_router
 from app.calls.router import router as calls_router
 from app.calls.webhooks import router as voice_webhook_router
 from app.campaigns.router import router as campaigns_router
+from app.connect.router import router as connect_router
 from app.contacts.router import router as contacts_router
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
@@ -22,6 +25,7 @@ from app.core.ratelimit import get_redis
 from app.db.session import engine
 from app.integrations.router import router as integrations_router
 from app.leads.router import router as leads_router
+from app.platform.router import router as platform_router
 from app.telephony.router import router as telephony_router
 from app.tenants.router import router as tenants_router
 
@@ -74,6 +78,10 @@ for r in (
     admin_router,
     billing_webhook_router,
     voice_webhook_router,
+    platform_router,
+    connect_router,
+    assistant_router,
+    notifications_router,
 ):
     api.include_router(r)
 app.include_router(api)

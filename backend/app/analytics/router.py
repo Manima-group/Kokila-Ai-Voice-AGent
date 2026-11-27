@@ -5,13 +5,14 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.agents.models import Agent
-from app.auth.deps import TenantContext, require
+from app.auth.deps import TenantContext, require, require_capability
 from app.campaigns.models import Campaign
 from app.contacts.models import Lead
 from app.db.session import get_db
+from app.platform.registry import PRODUCT_CALLING_AGENT
 from app.telephony.models import Call
 
-router = APIRouter(prefix="/analytics", tags=["analytics"])
+router = APIRouter(prefix="/analytics", tags=["analytics"], dependencies=[Depends(require_capability(PRODUCT_CALLING_AGENT, "voice.agents"))])
 ANSWERED = Call.status == "completed"
 
 

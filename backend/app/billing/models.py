@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, Numeric, String, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -27,6 +27,7 @@ class Plan(IdMixin, TimestampMixin, Base):
 
 class Subscription(IdMixin, TimestampMixin, TenantMixin, Base):
     __tablename__ = "subscriptions"
+    __table_args__ = (Index("uq_subscriptions_current", "tenant_id", unique=True, postgresql_where=text("is_current")),)
     plan_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("plans.id", ondelete="RESTRICT"))
     status: Mapped[str] = mapped_column(String(20), index=True)  # trialing|active|past_due|cancelled|expired
     current_period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))

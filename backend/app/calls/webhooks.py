@@ -70,6 +70,11 @@ def _handle_inbound(db: Session, provider: VoiceProvider, route_key: str, payloa
     agent = db.get(Agent, number.inbound_agent_id)
     if tenant is None or tenant.status != "active" or agent is None or agent.status != "published" or not agent.provider_agent_id:
         return {"call_inbound": {}}
+    from app.platform.entitlements import has as has_capability
+
+    if not has_capability(db, tenant.id, "voice.inbound"):
+        log.warning("inbound call blocked: voice.inbound not enabled")
+        return {"call_inbound": {}}
     try:
         check_call_allowed(db, tenant.id)
     except AppError as exc:

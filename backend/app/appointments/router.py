@@ -9,13 +9,14 @@ from sqlalchemy.orm import Session
 from app.appointments.models import Appointment, CalendarConnection
 from app.appointments.service import available_slots, book, cancel, reschedule, zone
 from app.audit.service import audit_ctx
-from app.auth.deps import TenantContext, get_owned, require
+from app.auth.deps import TenantContext, get_owned, require, require_capability
 from app.contacts.models import Contact
 from app.core.errors import AppError
 from app.db.session import get_db
+from app.platform.registry import PRODUCT_CALLING_AGENT
 from app.schemas.common import ORM, paginate
 
-router = APIRouter(tags=["appointments"])
+router = APIRouter(tags=["appointments"], dependencies=[Depends(require_capability(PRODUCT_CALLING_AGENT))])
 
 
 class ConnectionIn(BaseModel):

@@ -126,6 +126,18 @@ def execute_tool(db: Session, call: Call, name: str, args: dict) -> dict:
             )
         )
         emit(db, call.tenant_id, "call.handoff_requested", {"call_id": str(call.id), "reason": _s(args, "reason", 300)})
+        from app.assistant.models import Notification
+
+        db.add(
+            Notification(
+                tenant_id=call.tenant_id,
+                user_id=None,
+                kind="handoff",
+                title="Caller asked for a human",
+                body=_s(args, "reason", 300),
+                link=f"/calling-agent/calls/{call.id}",
+            )
+        )
         return {"status": "requested", "message": "A team member has been notified and will follow up."}
 
     return {"status": "error", "message": "Unknown action"}

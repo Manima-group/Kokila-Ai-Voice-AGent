@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     retell_api_key: str = ""
     mock_webhook_secret: str = "mock-webhook-secret-dev"
 
+    # Business Assistant LLM (explicit provider + model; no silent fallback)
+    llm_provider: Literal["none", "openai", "anthropic"] = "none"
+    llm_model: str = ""
+    openai_api_key: str = ""
+    anthropic_api_key: str = ""
+    brave_api_key: str = ""  # web research (Brave Search API); research disabled when empty
+
     # Billing (Razorpay)
     razorpay_key_id: str = ""
     razorpay_key_secret: str = ""

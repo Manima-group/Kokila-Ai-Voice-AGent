@@ -7,14 +7,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.audit.service import audit_ctx
-from app.auth.deps import TenantContext, get_owned, require
+from app.auth.deps import TenantContext, get_owned, require, require_capability
 from app.contacts.models import Contact, Lead, LeadActivity
 from app.core.errors import AppError, Forbidden
 from app.db.session import get_db
+from app.platform.registry import PRODUCT_CALLING_AGENT
 from app.schemas.common import ORM, paginate
 from app.tenants.models import TenantMembership
 
-router = APIRouter(prefix="/leads", tags=["leads"])
+router = APIRouter(prefix="/leads", tags=["leads"], dependencies=[Depends(require_capability(PRODUCT_CALLING_AGENT))])
 STATUSES = ("new", "contacted", "qualified", "unqualified", "converted", "lost")
 
 

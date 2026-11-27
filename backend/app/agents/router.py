@@ -17,17 +17,18 @@ from app.agents.templates import (
     post_call_fields,
 )
 from app.audit.service import audit_ctx
-from app.auth.deps import TenantContext, get_owned, require
+from app.auth.deps import TenantContext, get_owned, require, require_capability
 from app.billing.service import require_active
 from app.core.config import get_settings
 from app.core.errors import AppError, Conflict, PaymentRequired
 from app.core.phone import normalize_e164
 from app.db.session import get_db
+from app.platform.registry import PRODUCT_CALLING_AGENT
 from app.schemas.common import ORM
 from app.voice.base import AgentSpec, ProviderAgentRef, ProviderError, UnsupportedCapability
 from app.voice.registry import get_provider
 
-router = APIRouter(prefix="/agents", tags=["agents"])
+router = APIRouter(prefix="/agents", tags=["agents"], dependencies=[Depends(require_capability(PRODUCT_CALLING_AGENT, "voice.agents"))])
 
 
 class BusinessHours(BaseModel):

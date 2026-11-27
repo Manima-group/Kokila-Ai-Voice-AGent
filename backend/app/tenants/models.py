@@ -16,6 +16,7 @@ class Tenant(IdMixin, TimestampMixin, Base):
     timezone: Mapped[str] = mapped_column(String(64), default="Asia/Kolkata")
     industry: Mapped[str | None] = mapped_column(String(80))
     outbound_paused: Mapped[bool] = mapped_column(Boolean, default=False)
+    policy_revision: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
     # Compliance profile required before live outbound (TRAI TCCCPR / DLT). See docs/TELECOM_COMPLIANCE_CHECKLIST.md
     compliance: Mapped[dict] = mapped_column(JSONB, default=dict)
     settings: Mapped[dict] = mapped_column(JSONB, default=dict)

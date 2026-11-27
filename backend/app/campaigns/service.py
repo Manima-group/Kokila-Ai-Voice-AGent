@@ -10,11 +10,12 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.agents.models import Agent
-from app.billing.service import check_call_allowed, current_entitlement
+from app.billing.service import check_call_allowed
 from app.campaigns.models import CallAttempt, Campaign, CampaignContact
 from app.contacts.models import Contact
 from app.contacts.service import is_suppressed, valid_consent
 from app.core.errors import AppError
+from app.platform.entitlements import has as has_capability
 from app.telephony.models import Call, PhoneNumber
 from app.tenants.models import PlatformSetting, Tenant
 from app.voice.base import OutboundRequest, ProviderError
@@ -97,9 +98,8 @@ def evaluate_contacts(db: Session, campaign: Campaign) -> dict:
 def start_campaign(db: Session, campaign: Campaign) -> dict:
     tenant = db.get(Tenant, campaign.tenant_id)
     assert tenant is not None
-    ent = current_entitlement(db, tenant.id)
-    if ent is None or not ent.plan.features.get("outbound"):  # type: ignore[attr-defined]
-        raise AppError("Your plan does not include outbound campaigns", code="feature_not_in_plan", status_code=402)
+    if not has_capability(db, tenant.id, "voice.outbound"):
+        raise AppError("Outbound campaigns are not enabled for your organization", code="capability_disabled", status_code=403)
     problems = compliance_problems(db, campaign, tenant, get_provider().name)
     if problems:
         raise AppError("Compliance prerequisites not met: " + ", ".join(problems), code="compliance_blocked", status_code=409)
@@ -118,6 +118,9 @@ def dispatch_campaign(db: Session, campaign: Campaign, now: datetime | None = No
     assert tenant is not None
     if campaign.status != "running":
         stats["reason"] = "not_running"
+        return stats
+    if not has_capability(db, tenant.id, "voice.outbound"):
+        stats["reason"] = "capability_disabled"
         return stats
     if kill_switch_on(db) or tenant.outbound_paused or tenant.status != "active":
         stats["reason"] = "paused_by_kill_switch"

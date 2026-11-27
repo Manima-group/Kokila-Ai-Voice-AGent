@@ -21,7 +21,7 @@ from sqlalchemy import text  # noqa: E402
 from alembic import command  # noqa: E402
 from app.db.session import SessionLocal, engine  # noqa: E402
 
-KEEP = {"alembic_version", "plans"}
+KEEP = {"alembic_version", "plans", "plan_capabilities"}
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -100,6 +100,12 @@ def grant_plan(db, tenant_id, *, outbound=True, minutes=1000, agents=5, concurre
             features={"outbound": outbound, "calendar": True},
         )
         db.add(plan)
+        db.flush()
+        from app.platform.models import PlanCapability
+        from app.platform.registry import TRIAL_CAPABILITIES
+
+        for key in set(TRIAL_CAPABILITIES) | ({"voice.outbound"} if outbound else set()):
+            db.add(PlanCapability(plan_id=plan.id, capability_key=key, enabled=True, limits={}))
         db.flush()
     for s in db.query(Subscription).filter_by(tenant_id=uuid.UUID(str(tenant_id)), is_current=True):
         s.is_current = False

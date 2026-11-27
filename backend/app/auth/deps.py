@@ -87,6 +87,19 @@ def require(permission: str):
     return _dep
 
 
+def require_capability(*keys: str):
+    """Server-side product/feature entitlement check (403 capability_disabled)."""
+
+    def _dep(ctx: TenantContext = Depends(tenant_context), db: Session = Depends(get_db)) -> TenantContext:
+        from app.platform.entitlements import require as require_cap
+
+        for key in keys:
+            require_cap(db, ctx.tenant_id, key)
+        return ctx
+
+    return _dep
+
+
 def require_superadmin(principal: Principal = Depends(current_principal)) -> Principal:
     if not principal.user.is_superadmin:
         raise Forbidden("Super admin only")

@@ -69,6 +69,7 @@ def test_cross_tenant_isolation(client, db):
     a, a_tid, _ = register(client, "Tenant A")
     b, b_tid, _ = register(client, "Tenant B")
     grant_plan(db, a_tid)
+    grant_plan(db, b_tid)
     c = client.post("/api/v1/contacts", json={"phone": "9876543210", "name": "Ravi"}, headers=a).json()
     # B cannot read A's contact even with the id, and gets 404 (no existence leak)
     assert client.get(f"/api/v1/contacts/{c['id']}", headers=b).status_code == 404

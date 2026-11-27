@@ -10,16 +10,17 @@ from sqlalchemy.orm import Session
 
 from app.agents.models import Agent
 from app.audit.service import audit_ctx
-from app.auth.deps import TenantContext, get_owned, require
+from app.auth.deps import TenantContext, get_owned, require, require_capability
 from app.campaigns.models import CallAttempt, Campaign, CampaignContact
 from app.campaigns.service import campaign_stats, dispatch_campaign, evaluate_contacts, start_campaign
 from app.contacts.models import Contact
 from app.core.errors import AppError
 from app.db.session import get_db
+from app.platform.registry import PRODUCT_CALLING_AGENT
 from app.schemas.common import ORM, paginate
 from app.telephony.models import PhoneNumber
 
-router = APIRouter(prefix="/campaigns", tags=["campaigns"])
+router = APIRouter(prefix="/campaigns", tags=["campaigns"], dependencies=[Depends(require_capability(PRODUCT_CALLING_AGENT, "voice.outbound"))])
 HM = r"^([01]\d|2[0-3]):[0-5]\d$"
 
 

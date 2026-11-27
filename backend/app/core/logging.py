@@ -3,7 +3,7 @@ import logging
 import re
 import sys
 
-_PHONE = re.compile(r"\+?\d[\d\s-]{8,}\d")
+_PHONE = re.compile(r"(?<![\w-])\+?\d[\d\s-]{8,}\d(?![\w-])")
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
 
 

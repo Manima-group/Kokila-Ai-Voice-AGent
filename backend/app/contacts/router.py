@@ -9,16 +9,17 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.audit.service import audit_ctx
-from app.auth.deps import TenantContext, get_owned, require
+from app.auth.deps import TenantContext, get_owned, require, require_capability
 from app.contacts.models import Contact, ContactConsent, Lead, LeadActivity, SuppressionEntry
 from app.contacts.service import get_or_create_contact, suppress
 from app.core.errors import AppError, Conflict
 from app.core.phone import normalize_e164
 from app.db.session import get_db
+from app.platform.registry import PRODUCT_CALLING_AGENT
 from app.schemas.common import ORM, paginate
 from app.telephony.models import Call
 
-router = APIRouter(tags=["contacts"])
+router = APIRouter(tags=["contacts"], dependencies=[Depends(require_capability(PRODUCT_CALLING_AGENT))])
 MAX_IMPORT_BYTES = 5 * 1024 * 1024
 MAX_IMPORT_ROWS = 20000
 

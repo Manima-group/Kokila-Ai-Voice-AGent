@@ -80,3 +80,11 @@ def purge_raw_events() -> int:
         n = db.execute(delete(WebhookEvent).where(WebhookEvent.created_at < cutoff, WebhookEvent.status.in_(("processed", "ignored")))).rowcount  # type: ignore[attr-defined]
         db.commit()
         return n
+
+
+@celery_app.task(name="kokila.deliver_reminders")
+def deliver_reminders() -> int:
+    from app.assistant.service import deliver_due_reminders
+
+    with SessionLocal() as db:
+        return deliver_due_reminders(db)

@@ -9,18 +9,19 @@ from sqlalchemy.orm import Session
 
 from app.agents.models import Agent
 from app.audit.service import audit_ctx
-from app.auth.deps import TenantContext, get_owned, require
+from app.auth.deps import TenantContext, get_owned, require, require_capability
 from app.core.config import get_settings
 from app.core.errors import AppError, Conflict
 from app.core.phone import normalize_e164
 from app.core.security import decrypt_secret, encrypt_secret
 from app.db.session import get_db
+from app.platform.registry import PRODUCT_CALLING_AGENT
 from app.schemas.common import ORM
 from app.telephony.models import PhoneNumber, ProviderAccount
 from app.voice.base import ProviderError
 from app.voice.registry import get_provider
 
-router = APIRouter(tags=["telephony"])
+router = APIRouter(tags=["telephony"], dependencies=[Depends(require_capability(PRODUCT_CALLING_AGENT, "voice.agents"))])
 
 
 class AccountIn(BaseModel):

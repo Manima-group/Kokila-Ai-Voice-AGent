@@ -16,6 +16,7 @@ celery_app.conf.update(
     beat_schedule={
         "dispatch-campaigns": {"task": "kokila.dispatch_campaigns", "schedule": 30.0},
         "process-outbox": {"task": "kokila.process_outbox", "schedule": 15.0},
+        "deliver-reminders": {"task": "kokila.deliver_reminders", "schedule": 30.0},
         "retry-webhooks": {"task": "kokila.retry_failed_webhooks", "schedule": 60.0},
         "reconcile-appointments": {"task": "kokila.reconcile_appointments", "schedule": 300.0},
         "expire-subscriptions": {"task": "kokila.expire_subscriptions", "schedule": 3600.0},
