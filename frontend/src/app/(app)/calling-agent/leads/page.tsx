@@ -35,7 +35,7 @@ export default function Leads() {
           <Table head={["Contact", "Status", "Score", "Last outcome", "Follow-up", "Assigned to"]}>
             {q.data.items.map((l) => (
               <tr key={l.id}>
-                <td className="td"><Link className="text-brand-700 hover:underline" href={`/contacts/${l.contact_id}`}>{l.contact_name ?? l.contact_phone}</Link></td>
+                <td className="td"><Link className="text-brand-700 hover:underline" href={`/calling-agent/contacts/${l.contact_id}`}>{l.contact_name ?? l.contact_phone}</Link></td>
                 <td className="td">
                   <select className="input w-36" value={l.status} onChange={(e) => update.mutate({ id: l.id, status: e.target.value })} aria-label="Lead status">
                     {STATUSES.map((s) => <option key={s}>{s}</option>)}

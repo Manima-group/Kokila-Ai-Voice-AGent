@@ -11,6 +11,9 @@ type AuthState = {
   loading: boolean;
   membership: Membership | null;
   can: (perm: string) => boolean;
+  hasCap: (key: string) => boolean;
+  capsLoaded: boolean;
+  refreshCaps: () => Promise<void>;
   login: (token: string) => Promise<void>;
   logout: () => Promise<void>;
   switchTenant: (id: string) => void;
@@ -26,6 +29,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
   const [loading, setLoading] = useState(true);
   const [tenant, setTenant] = useState<string | null>(null);
+  const [caps, setCaps] = useState<Record<string, boolean> | null>(null);
+
+  const loadCaps = useCallback(async () => {
+    try {
+      const r = await api<{ capabilities: Record<string, boolean> }>("/me/capabilities");
+      setCaps(r.capabilities);
+    } catch {
+      setCaps({});
+    }
+  }, []);
 
   const loadMe = useCallback(async () => {
     const data = await api<Me>("/auth/me");
@@ -34,7 +47,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const pick = data.memberships.find((m) => m.tenant_id === stored) ?? data.memberships[0] ?? null;
     setTenantId(pick?.tenant_id ?? null);
     setTenant(pick?.tenant_id ?? null);
-  }, []);
+    if (pick) await loadCaps();
+    else setCaps({});
+  }, [loadCaps]);
 
   useEffect(() => {
     (async () => {
@@ -55,6 +70,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       loading,
       membership,
       can: (perm) => !!membership?.permissions.includes(perm),
+      hasCap: (key) => !!caps?.[key],
+      capsLoaded: caps !== null,
+      refreshCaps: loadCaps,
       login: async (token) => {
         setAccessToken(token);
         await loadMe();
@@ -69,11 +87,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
       switchTenant: (id) => {
         setTenantId(id);
         setTenant(id);
+        setCaps(null);
         client.clear();
+        void loadCaps();
       },
       reload: loadMe,
     };
-  }, [me, loading, tenant, loadMe, client]);
+  }, [me, loading, tenant, loadMe, client, caps, loadCaps]);
 
   return (
     <QueryClientProvider client={client}>

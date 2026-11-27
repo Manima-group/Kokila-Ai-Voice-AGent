@@ -19,6 +19,7 @@ export default function Admin() {
   const plans = useApi<Plan[]>(me?.is_superadmin ? "/admin/plans" : null);
   const ks = useApi<{ enabled: boolean; reason?: string }>(me?.is_superadmin ? "/admin/kill-switch" : null);
   const [plan, setPlan] = useState<typeof EMPTY_PLAN | null>(null);
+  const [capsFor, setCapsFor] = useState<TenantRow | null>(null);
   const [error, setError] = useState<unknown>(null);
 
   if (!me?.is_superadmin) return <ErrorBox error={new Error("Super admin access required")} />;
@@ -75,6 +76,7 @@ export default function Admin() {
                 <button className="text-green-700 hover:underline" onClick={() => { const r = reason("Approve outbound compliance"); if (r.length >= 3) run(() => api(`/admin/tenants/${t.id}/compliance-decision`, { method: "POST", body: { approved: true, note: r } })); }}>Approve</button>
                 <button className="text-red-600 hover:underline" onClick={() => { const r = reason("Reject outbound compliance"); if (r.length >= 3) run(() => api(`/admin/tenants/${t.id}/compliance-decision`, { method: "POST", body: { approved: false, note: r } })); }}>Reject</button>
               </>}
+              <button className="font-medium text-brand-700 hover:underline" onClick={() => setCapsFor(t)}>Products &amp; features</button>
               <button className="text-brand-700 hover:underline" onClick={() => { const code = window.prompt("Assign plan code:"); const r = code ? reason("Assign plan") : ""; if (code && r.length >= 3) run(() => api(`/admin/tenants/${t.id}/plan`, { method: "POST", body: { plan_code: code, days: 30, reason: r } })); }}>Assign plan</button>
             </td>
           </tr>
@@ -92,6 +94,7 @@ export default function Admin() {
           </tr>
         ))}
       </Table>
+      {capsFor && <CapabilityModal tenant={capsFor} onClose={() => { setCapsFor(null); tenants.refetch(); }} />}
       <Modal open={!!plan} title={plan?.code ? `Plan ${plan.code}` : "New plan"} onClose={() => setPlan(null)}>
         {plan && (
           <div className="grid grid-cols-2 gap-3">
@@ -117,5 +120,57 @@ export default function Admin() {
         )}
       </Modal>
     </div>
+  );
+}
+
+
+type CapRow = { key: string; label: string; product: string; effective: boolean; source: string; plan_enabled: boolean; override: boolean | null };
+
+function CapabilityModal({ tenant, onClose }: { tenant: TenantRow; onClose: () => void }) {
+  const q = useApi<{ revision: number; capabilities: CapRow[] }>(`/admin/tenants/${tenant.id}/capabilities`);
+  const [error, setError] = useState<unknown>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const change = async (key: string, enabled: boolean | null) => {
+    const reason = window.prompt("Reason for this change (audited):") ?? "";
+    if (reason.length < 3) return;
+    setError(null); setMsg(null);
+    try {
+      const r = await api<{ cascaded: string[] }>(`/admin/tenants/${tenant.id}/capabilities`, { method: "PATCH", body: { changes: [{ key, enabled }], expected_revision: q.data!.revision, reason } });
+      setMsg(r.cascaded.length ? `Also disabled dependent features: ${r.cascaded.join(", ")}` : "Saved.");
+      q.refetch();
+    } catch (e) { setError(e); q.refetch(); }
+  };
+  const groups: [string, string][] = [["calling_agent", "Calling Agent"], ["business_assistant", "Business Assistant"], ["platform", "Platform"]];
+  return (
+    <Modal open title={`${tenant.name} — products & features`} onClose={onClose}>
+      {q.isLoading ? <Loading /> : (
+        <div className="space-y-4 text-sm">
+          <p className="text-muted">Effective access = plan package + overrides, minus platform kill switches. Every change is enforced by the API and audited. Revision {q.data?.revision}.</p>
+          <ErrorBox error={error} />
+          {msg && <p className="text-green-700">{msg}</p>}
+          {groups.map(([g, label]) => (
+            <div key={g}>
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">{label}</div>
+              <ul className="divide-y divide-line rounded-lg border border-line">
+                {q.data?.capabilities.filter((c) => c.product === g).map((c) => (
+                  <li key={c.key} className="flex items-center justify-between gap-2 px-3 py-2">
+                    <span>
+                      <span className={c.key.startsWith("product.") ? "font-semibold" : ""}>{c.label}</span>{" "}
+                      <Badge tone={c.effective ? "green" : "grey"}>{c.effective ? "on" : c.source.replace("_", " ")}</Badge>
+                      {c.override !== null && <span className="ml-1 text-xs text-brand-700">override</span>}
+                    </span>
+                    <span className="flex gap-1">
+                      <button className="btn-secondary px-2 py-1 text-xs" disabled={c.override === true} onClick={() => change(c.key, true)}>Enable</button>
+                      <button className="btn-secondary px-2 py-1 text-xs" disabled={c.override === false} onClick={() => change(c.key, false)}>Disable</button>
+                      {c.override !== null && <button className="btn-secondary px-2 py-1 text-xs" onClick={() => change(c.key, null)}>Use plan</button>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </Modal>
   );
 }

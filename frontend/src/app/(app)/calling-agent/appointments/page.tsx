@@ -15,7 +15,7 @@ export default function Appointments() {
   const { can } = useAuth();
   const conns = useApi<Conn[]>("/calendar-connections");
   const list = useApi<Page<Appt>>("/appointments?limit=100");
-  const [day, setDay] = useState(() => new Date(Date.now() + 86400000).toISOString().slice(0, 10));
+  const [day, setDay] = useState(() => { const d = new Date(Date.now() + 86400000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; });
   const slots = useApi<{ timezone: string; slots: string[] }>(conns.data?.length ? `/appointments/availability?day=${day}` : null);
   const [book, setBook] = useState<string | null>(null);
   const [title, setTitle] = useState("Consultation");

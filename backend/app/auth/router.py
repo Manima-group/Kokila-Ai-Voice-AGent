@@ -44,8 +44,9 @@ class RegisterIn(BaseModel):
 
 
 class LoginIn(BaseModel):
-    email: EmailStr
-    password: str
+    # Login only looks the account up, so don't reject addresses that registration would refuse.
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(max_length=256)
 
 
 class TokenOut(BaseModel):

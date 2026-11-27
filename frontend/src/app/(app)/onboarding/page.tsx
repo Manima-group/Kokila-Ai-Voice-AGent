@@ -30,7 +30,7 @@ export default function Onboarding() {
           </li>
         ))}
       </ol>
-      <Link href="/dashboard" className="btn-primary mt-6">Go to dashboard</Link>
+      <Link href="/overview" className="btn-primary mt-6">Go to dashboard</Link>
     </div>
   );
 }

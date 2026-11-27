@@ -14,12 +14,12 @@ export default function AgentsPage() {
   return (
     <div>
       <PageHeader title="Voice agents" subtitle="Each agent has versioned configuration; publishing syncs it to the voice provider."
-        actions={can("agents:write") && <Link className="btn-primary" href="/agents/new">New agent</Link>} />
+        actions={can("agents:write") && <Link className="btn-primary" href="/calling-agent/agents/new">New agent</Link>} />
       {q.isLoading ? <Loading /> : q.error ? <ErrorBox error={q.error} /> : q.data?.length ? (
         <Table head={["Name", "Template", "Status", "Version", "Provider sync", "Created"]}>
           {q.data.map((a) => (
             <tr key={a.id} className="hover:bg-panel">
-              <td className="td"><Link className="font-medium text-brand-700 hover:underline" href={`/agents/${a.id}`}>{a.name}</Link></td>
+              <td className="td"><Link className="font-medium text-brand-700 hover:underline" href={`/calling-agent/agents/${a.id}`}>{a.name}</Link></td>
               <td className="td">{a.template.replace(/_/g, " ")}</td>
               <td className="td"><Badge>{a.status}</Badge></td>
               <td className="td">v{a.latest_version}</td>
@@ -29,7 +29,7 @@ export default function AgentsPage() {
           ))}
         </Table>
       ) : <Empty title="No agents yet" body="Start from a template: receptionist, admissions, real estate, booking, support or sales follow-up."
-        action={can("agents:write") && <Link className="btn-primary" href="/agents/new">Create agent</Link>} />}
+        action={can("agents:write") && <Link className="btn-primary" href="/calling-agent/agents/new">Create agent</Link>} />}
     </div>
   );
 }

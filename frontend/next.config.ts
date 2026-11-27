@@ -9,6 +9,17 @@ const nextConfig: NextConfig = {
     // Same-origin API access so the httpOnly refresh cookie works without cross-site CORS.
     return [{ source: "/api/v1/:path*", destination: `${backend}/api/v1/:path*` }];
   },
+  async redirects() {
+    // Preserve pre-unification URLs.
+    const moved = ["agents", "voice-test", "phone-numbers", "calls", "contacts", "leads", "campaigns", "appointments", "analytics"];
+    return [
+      { source: "/dashboard", destination: "/overview", permanent: false },
+      ...moved.flatMap((m) => [
+        { source: `/${m}`, destination: `/calling-agent/${m}`, permanent: true },
+        { source: `/${m}/:path*`, destination: `/calling-agent/${m}/:path*`, permanent: true },
+      ]),
+    ];
+  },
   async headers() {
     return [
       {

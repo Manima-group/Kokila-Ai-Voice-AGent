@@ -84,7 +84,7 @@ export default function CallDetail() {
               <dt className="text-muted">Analysis</dt><dd><Badge>{c.analysis_status}</Badge></dd>
               <dt className="text-muted">Provider</dt><dd>{c.provider}</dd>
             </dl>
-            {c.contact_id && <Link className="btn-secondary mt-4 w-full" href={`/contacts/${c.contact_id}`}>Open contact</Link>}
+            {c.contact_id && <Link className="btn-secondary mt-4 w-full" href={`/calling-agent/contacts/${c.contact_id}`}>Open contact</Link>}
             {c.recording_url && <a className="btn-secondary mt-2 w-full" href={c.recording_url} target="_blank" rel="noreferrer">Recording</a>}
           </div>
           {c.extracted && Object.keys(c.extracted).length > 0 && (

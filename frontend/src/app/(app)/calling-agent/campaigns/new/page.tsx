@@ -42,7 +42,7 @@ export default function NewCampaign() {
     setError(null);
     try {
       const c = await api<{ id: string }>("/campaigns", { method: "POST", body: { ...v, timezone: "Asia/Kolkata", days_of_week: [0, 1, 2, 3, 4, 5] } });
-      router.push(`/campaigns/${c.id}`);
+      router.push(`/calling-agent/campaigns/${c.id}`);
     } catch (e) {
       setError(e);
     }

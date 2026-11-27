@@ -32,7 +32,7 @@ export default function SignupPage() {
     try {
       const r = await api<{ access_token: string }>("/auth/register", { method: "POST", body: v });
       await login(r.access_token);
-      router.replace("/onboarding");
+      router.replace("/overview");
     } catch (e) {
       setError(e);
     }

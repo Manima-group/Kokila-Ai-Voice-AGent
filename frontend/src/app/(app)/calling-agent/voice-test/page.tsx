@@ -75,7 +75,7 @@ export default function VoiceTest() {
         <button className="btn-primary" disabled={busy || published.length === 0} onClick={go}>{busy ? "Running…" : mode === "simulate" ? "Run simulation" : "Place test call"}</button>
         {result && (
           <div className="rounded-lg border border-line bg-panel p-4 text-sm">
-            {typeof result.call_id === "string" ? <>Simulation stored. <Link className="text-brand-700 underline" href={`/calls/${result.call_id}`}>Open call detail</Link></> : <>Provider call id: <code>{String(result.provider_call_id)}</code></>}
+            {typeof result.call_id === "string" ? <>Simulation stored. <Link className="text-brand-700 underline" href={`/calling-agent/calls/${result.call_id}`}>Open call detail</Link></> : <>Provider call id: <code>{String(result.provider_call_id)}</code></>}
           </div>
         )}
       </div>

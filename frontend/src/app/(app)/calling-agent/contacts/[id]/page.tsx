@@ -51,7 +51,7 @@ export default function ContactDetail() {
           {can("consent:write") && !c.suppressed && <button className="btn-secondary" onClick={() => call(() => api("/suppression", { method: "POST", body: { phone: c.phone_e164, reason: "opt_out" } }))}>Record opt-out</button>}
           {can("contacts:delete") && <button className="btn-danger" onClick={async () => {
             if (window.confirm("Permanently erase this contact's personal data? Call content will be redacted and the number suppressed.")) {
-              if (await call(() => api("/deletion-requests", { method: "POST", body: { contact_id: id, reason: "Erasure requested" } }))) router.replace("/contacts");
+              if (await call(() => api("/deletion-requests", { method: "POST", body: { contact_id: id, reason: "Erasure requested" } }))) router.replace("/calling-agent/contacts");
             }
           }}>Erase data</button>}
         </>} />
@@ -65,7 +65,7 @@ export default function ContactDetail() {
                 <li key={i} className="text-sm">
                   <div className="text-xs text-muted">{fmtDate(e.at)} · {e.type}</div>
                   {e.type === "call" ? (
-                    <Link className="text-brand-700 hover:underline" href={`/calls/${e.id}`}>{e.direction} call — {e.status}{e.outcome ? ` (${e.outcome})` : ""}</Link>
+                    <Link className="text-brand-700 hover:underline" href={`/calling-agent/calls/${e.id}`}>{e.direction} call — {e.status}{e.outcome ? ` (${e.outcome})` : ""}</Link>
                   ) : <div>{e.body}</div>}
                 </li>
               ))}

@@ -26,7 +26,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <PageHeader title={`Welcome${membership ? `, ${membership.tenant_name}` : ""}`} subtitle="Last 30 days of live (non-mock) activity" />
+      <PageHeader title="Calling Agent" subtitle={`${membership ? `${membership.tenant_name} · ` : ""}last 30 days of live (non-mock) activity`} actions={<Link className="btn-secondary" href="/onboarding">Setup checklist</Link>} />
       {ov.isLoading ? <Loading /> : ov.error ? <ErrorBox error={ov.error} /> : ov.data && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="Calls" value={ov.data.calls.total} hint={`${ov.data.calls.inbound} inbound · ${ov.data.calls.outbound} outbound`} />
@@ -51,7 +51,7 @@ export default function Dashboard() {
             <Table head={["When", "Direction", "Status", "Outcome", "Duration"]}>
               {calls.data.items.map((c) => (
                 <tr key={c.id} className="hover:bg-panel">
-                  <td className="td"><Link className="text-brand-700 hover:underline" href={`/calls/${c.id}`}>{fmtDate(c.created_at)}</Link> {c.is_mock && <Badge tone="orange">mock</Badge>}</td>
+                  <td className="td"><Link className="text-brand-700 hover:underline" href={`/calling-agent/calls/${c.id}`}>{fmtDate(c.created_at)}</Link> {c.is_mock && <Badge tone="orange">mock</Badge>}</td>
                   <td className="td capitalize">{c.direction}</td>
                   <td className="td"><Badge>{c.status}</Badge></td>
                   <td className="td">{c.outcome ? <Badge>{c.outcome}</Badge> : "—"}</td>
@@ -59,7 +59,7 @@ export default function Dashboard() {
                 </tr>
               ))}
             </Table>
-          ) : <Empty title="No calls yet" body="Publish an agent and connect a phone number, or run a simulated call from Voice testing." action={<Link className="btn-primary" href="/agents">Set up an agent</Link>} />}
+          ) : <Empty title="No calls yet" body="Publish an agent and connect a phone number, or run a simulated call from Voice testing." action={<Link className="btn-primary" href="/calling-agent/agents">Set up an agent</Link>} />}
         </section>
         <section>
           <h2 className="mb-3 font-semibold">Open follow-ups</h2>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { Badge, ErrorBox, Field, Loading, PageHeader } from "@/components/ui";
@@ -40,7 +41,7 @@ function SettingsForm({ tenant, refetch }: { tenant: Tenant; refetch: () => void
 
   return (
     <div className="max-w-3xl space-y-6">
-      <PageHeader title="Organization settings" />
+      <PageHeader title="Organization settings" actions={<><Link className="btn-secondary" href="/team">Team</Link><Link className="btn-secondary" href="/audit">Audit log</Link></>} />
       <ErrorBox error={error} />
       {msg && <div className="rounded-lg bg-green-50 px-4 py-2 text-sm text-green-700">{msg}</div>}
       <section className="card space-y-3">

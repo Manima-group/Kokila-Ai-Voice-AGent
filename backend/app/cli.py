@@ -16,8 +16,14 @@ from app.db.session import SessionLocal
 
 
 def create_superadmin(email: str) -> None:
+    from pydantic import EmailStr, TypeAdapter, ValidationError
+
     from app.tenants.models import User
 
+    try:
+        email = TypeAdapter(EmailStr).validate_python(email)
+    except ValidationError:
+        sys.exit(f"'{email}' is not a deliverable email address; use a real domain (e.g. ops@manima.co.in)")
     password = os.environ.get("SUPERADMIN_PASSWORD", "")
     if len(password) < 12:
         sys.exit("Set SUPERADMIN_PASSWORD (>= 12 chars) in the environment")

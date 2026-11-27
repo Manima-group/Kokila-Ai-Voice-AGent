@@ -28,7 +28,7 @@ function LoginForm() {
       const r = await api<{ access_token: string }>("/auth/login", { method: "POST", body: v });
       await login(r.access_token);
       const next = params.get("next");
-      router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard");
+      router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/overview");
     } catch (e) {
       setError(e);
     }

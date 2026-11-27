@@ -30,7 +30,7 @@ export default function Calls() {
           <Table head={["When", "Direction", "From", "To", "Status", "Outcome", "Duration", "Handoff"]}>
             {q.data.items.map((c) => (
               <tr key={c.id} className="hover:bg-panel">
-                <td className="td"><Link className="text-brand-700 hover:underline" href={`/calls/${c.id}`}>{fmtDate(c.created_at)}</Link> {c.is_mock && <Badge tone="orange">mock</Badge>}</td>
+                <td className="td"><Link className="text-brand-700 hover:underline" href={`/calling-agent/calls/${c.id}`}>{fmtDate(c.created_at)}</Link> {c.is_mock && <Badge tone="orange">mock</Badge>}</td>
                 <td className="td capitalize">{c.direction}</td>
                 <td className="td font-mono text-xs">{c.from_number ?? "—"}</td>
                 <td className="td font-mono text-xs">{c.to_number ?? "—"}</td>

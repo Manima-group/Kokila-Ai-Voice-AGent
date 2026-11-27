@@ -26,7 +26,7 @@ export default function NewAgent() {
     setError(null);
     try {
       const a = await api<{ id: string }>("/agents", { method: "POST", body: v });
-      router.push(`/agents/${a.id}?created=1`);
+      router.push(`/calling-agent/agents/${a.id}?created=1`);
     } catch (e) {
       setError(e);
     }

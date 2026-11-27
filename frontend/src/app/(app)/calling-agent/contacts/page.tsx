@@ -49,7 +49,7 @@ export default function Contacts() {
           <Table head={["Name", "Phone", "Email", "Tags", "Source", "Added"]}>
             {list.data.items.map((c) => (
               <tr key={c.id} className="hover:bg-panel">
-                <td className="td"><Link className="font-medium text-brand-700 hover:underline" href={`/contacts/${c.id}`}>{c.name ?? "Unnamed"}</Link></td>
+                <td className="td"><Link className="font-medium text-brand-700 hover:underline" href={`/calling-agent/contacts/${c.id}`}>{c.name ?? "Unnamed"}</Link></td>
                 <td className="td font-mono text-xs">{c.phone_e164}</td>
                 <td className="td">{c.email ?? "—"}</td>
                 <td className="td text-xs">{c.tags.join(", ")}</td>
