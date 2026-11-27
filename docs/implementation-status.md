@@ -2,6 +2,17 @@
 
 _Last updated 25 Nov 2026 (branch `feat/kokila-v5-foundation`)._
 
+## Integration checkpoint (27 Nov 2026, branch `feature/integrate-unified-platform`, draft PR #2)
+
+The earlier Kokila Calling Agent codebase (the "original Kokila codebase" blocker below) is on `feature/unified-platform`. It is being ported into this architecture. The plan and the full comparison are in `docs/branch-comparison.md`.
+
+Step 1 is verified:
+* Roles, permissions, catalog v2 and migration 0003 are in.
+* 44 tests pass locally.
+* CI is green for api, web and secrets-scan.
+
+Next is step 2, the Calling Agent core.
+
 ## Repository audit (§24.4 step 1)
 
 `Manima-group/Kokila-Ai-Voice-AGent` was **empty** (no commits) when work began. The spec says an existing Kokila
