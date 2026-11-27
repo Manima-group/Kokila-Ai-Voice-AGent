@@ -104,6 +104,6 @@ jobs:
             -e GIT_CONFIG_COUNT=1 \
             -e GIT_CONFIG_KEY_0=safe.directory \
             -e GIT_CONFIG_VALUE_0=/repo \
-            -v "$GITHUB_WORKSPACE:/repo:ro" \
+            -v "$GITHUB_WORKSPACE:/repo:ro" -w /repo \
             ghcr.io/gitleaks/gitleaks:v8.24.3 git \
             --redact --log-opts="--diff-merges=first-parent HEAD" /repo

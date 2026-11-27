@@ -1,0 +1,6 @@
+# Reviewed Kokila development placeholders and idempotency variable
+0b4ddacd9d8e8f1775fc02684a91c543348f9671:.env.example:generic-api-key:25
+9028c00c21c2db392fdc355358a88648012c5b94:.env.example:generic-api-key:32
+9028c00c21c2db392fdc355358a88648012c5b94:backend/app/core/config.py:generic-api-key:71
+a534e531fd3d8c84561f7498def67d519bea5b4d:services/api/app/assistant/service.py:generic-api-key:354
+bb8fc14f7fce41da9687a29b89aeeebf02c9e398:backend/app/core/config.py:generic-api-key:64
