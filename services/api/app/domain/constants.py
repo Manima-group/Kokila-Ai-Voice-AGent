@@ -42,24 +42,61 @@ class Permission(StrEnum):
     TENANT_IDENTITY_MANAGE = "tenant.identity.manage"
     AGENTS_MANAGE = "agents.manage"
     AUDIT_READ = "audit.read"
+    # Calling Agent (business organizations)
+    CALLS_READ = "calls.read"
+    CALLS_TRANSCRIPT = "calls.transcript"
+    CALLS_HANDOFF = "calls.handoff"
+    CONTACTS_WRITE = "contacts.write"
+    CONTACTS_IMPORT = "contacts.import"
+    CONTACTS_DELETE = "contacts.delete"
+    CONSENT_WRITE = "consent.write"
+    LEADS_WRITE = "leads.write"
+    LEADS_ASSIGN = "leads.assign"
+    CAMPAIGNS_WRITE = "campaigns.write"
+    CAMPAIGNS_CONTROL = "campaigns.control"
+    APPOINTMENTS_WRITE = "appointments.write"
+    ANALYTICS_READ = "analytics.read"
+    BILLING_MANAGE = "billing.manage"
+    INTEGRATIONS_MANAGE = "integrations.manage"
 
 
 class TenantRole(StrEnum):
     OWNER = "owner"
     ADMIN = "admin"
+    MANAGER = "manager"
     STAFF = "staff"
     MEMBER = "member"
+    VIEWER = "viewer"
 
+
+_ASSISTANT_BASE: Final[frozenset[Permission]] = frozenset(
+    {Permission.ASSISTANT_USE, Permission.MEMORY_MANAGE, Permission.TOOLS_EXECUTE, Permission.APPROVALS_DECIDE}
+)
+_CALLING_READ: Final[frozenset[Permission]] = frozenset({Permission.CALLS_READ, Permission.ANALYTICS_READ})
+_OPERATOR: Final[frozenset[Permission]] = _CALLING_READ | {
+    Permission.CALLS_TRANSCRIPT,
+    Permission.CALLS_HANDOFF,
+    Permission.CONTACTS_WRITE,
+    Permission.APPOINTMENTS_WRITE,
+}
 
 ROLE_PERMISSIONS: Final[dict[TenantRole, frozenset[Permission]]] = {
     TenantRole.OWNER: frozenset(Permission),
-    TenantRole.ADMIN: frozenset(Permission),
-    TenantRole.STAFF: frozenset(
-        {Permission.ASSISTANT_USE, Permission.MEMORY_MANAGE, Permission.TOOLS_EXECUTE, Permission.APPROVALS_DECIDE}
-    ),
-    TenantRole.MEMBER: frozenset(
-        {Permission.ASSISTANT_USE, Permission.MEMORY_MANAGE, Permission.TOOLS_EXECUTE, Permission.APPROVALS_DECIDE}
-    ),
+    TenantRole.ADMIN: frozenset(Permission) - {Permission.BILLING_MANAGE},
+    TenantRole.MANAGER: _ASSISTANT_BASE
+    | _OPERATOR
+    | {
+        Permission.CONTACTS_IMPORT,
+        Permission.CONSENT_WRITE,
+        Permission.LEADS_WRITE,
+        Permission.LEADS_ASSIGN,
+        Permission.CAMPAIGNS_WRITE,
+        Permission.CAMPAIGNS_CONTROL,
+        Permission.AGENTS_MANAGE,
+    },
+    TenantRole.STAFF: _ASSISTANT_BASE | _OPERATOR,
+    TenantRole.MEMBER: _ASSISTANT_BASE,
+    TenantRole.VIEWER: frozenset({Permission.ASSISTANT_USE, Permission.MEMORY_MANAGE}) | _CALLING_READ,
 }
 
 

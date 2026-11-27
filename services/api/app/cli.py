@@ -65,7 +65,13 @@ DEFAULT_PLANS: list[dict] = [
         "name": "Voice Starter",
         "product": "voice",
         "price_minor": 299_900,
-        "caps": {"assistant.text": {}, "voice.agents": {}, "voice.inbound": {"monthly": 500}, "assistant.identity": {}},
+        "caps": {
+            "assistant.text": {},
+            "voice.agents": {},
+            "voice.inbound": {"monthly": 500},
+            "voice.crm": {},
+            "assistant.identity": {},
+        },
     },
     {
         "code": "voice-business",
@@ -78,6 +84,8 @@ DEFAULT_PLANS: list[dict] = [
             "voice.agents": {},
             "voice.inbound": {"monthly": 3000},
             "voice.outbound": {"monthly": 3000},
+            "voice.crm": {},
+            "voice.appointments": {},
             "connect.embed": {},
             "connect.analytics": {},
         },

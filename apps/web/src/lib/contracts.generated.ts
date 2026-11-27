@@ -18,7 +18,7 @@ export const OrgStatus = {"ACTIVE": "active", "SUSPENDED": "suspended"} as const
 export type OrgStatus = (typeof OrgStatus)[keyof typeof OrgStatus];
 export const OrgType = {"PERSONAL": "personal", "BUSINESS": "business"} as const;
 export type OrgType = (typeof OrgType)[keyof typeof OrgType];
-export const Permission = {"ASSISTANT_USE": "assistant.use", "MEMORY_MANAGE": "memory.manage", "TOOLS_EXECUTE": "tools.execute", "APPROVALS_DECIDE": "approvals.decide", "TENANT_MEMBERS_MANAGE": "tenant.members.manage", "TENANT_SETTINGS_MANAGE": "tenant.settings.manage", "TENANT_IDENTITY_MANAGE": "tenant.identity.manage", "AGENTS_MANAGE": "agents.manage", "AUDIT_READ": "audit.read"} as const;
+export const Permission = {"ASSISTANT_USE": "assistant.use", "MEMORY_MANAGE": "memory.manage", "TOOLS_EXECUTE": "tools.execute", "APPROVALS_DECIDE": "approvals.decide", "TENANT_MEMBERS_MANAGE": "tenant.members.manage", "TENANT_SETTINGS_MANAGE": "tenant.settings.manage", "TENANT_IDENTITY_MANAGE": "tenant.identity.manage", "AGENTS_MANAGE": "agents.manage", "AUDIT_READ": "audit.read", "CALLS_READ": "calls.read", "CALLS_TRANSCRIPT": "calls.transcript", "CALLS_HANDOFF": "calls.handoff", "CONTACTS_WRITE": "contacts.write", "CONTACTS_IMPORT": "contacts.import", "CONTACTS_DELETE": "contacts.delete", "CONSENT_WRITE": "consent.write", "LEADS_WRITE": "leads.write", "LEADS_ASSIGN": "leads.assign", "CAMPAIGNS_WRITE": "campaigns.write", "CAMPAIGNS_CONTROL": "campaigns.control", "APPOINTMENTS_WRITE": "appointments.write", "ANALYTICS_READ": "analytics.read", "BILLING_MANAGE": "billing.manage", "INTEGRATIONS_MANAGE": "integrations.manage"} as const;
 export type Permission = (typeof Permission)[keyof typeof Permission];
 export const PlatformPermission = {"PLATFORM_TENANTS_READ": "platform.tenants.read", "PLATFORM_TENANTS_MANAGE": "platform.tenants.manage", "PLATFORM_ENTITLEMENTS_MANAGE": "platform.entitlements.manage", "PLATFORM_PLANS_MANAGE": "platform.plans.manage", "PLATFORM_CONTROLS_MANAGE": "platform.controls.manage", "PLATFORM_AUDIT_READ": "platform.audit.read", "PLATFORM_USAGE_READ": "platform.usage.read"} as const;
 export type PlatformPermission = (typeof PlatformPermission)[keyof typeof PlatformPermission];
@@ -28,7 +28,7 @@ export const SessionState = {"IDLE": "idle", "LISTENING": "listening", "THINKING
 export type SessionState = (typeof SessionState)[keyof typeof SessionState];
 export const SideEffect = {"READ": "read", "INTERNAL_WRITE": "internal_write", "CONSEQUENTIAL": "consequential"} as const;
 export type SideEffect = (typeof SideEffect)[keyof typeof SideEffect];
-export const TenantRole = {"OWNER": "owner", "ADMIN": "admin", "STAFF": "staff", "MEMBER": "member"} as const;
+export const TenantRole = {"OWNER": "owner", "ADMIN": "admin", "MANAGER": "manager", "STAFF": "staff", "MEMBER": "member", "VIEWER": "viewer"} as const;
 export type TenantRole = (typeof TenantRole)[keyof typeof TenantRole];
 export const ToolRunStatus = {"REQUESTED": "requested", "VALIDATING": "validating", "AWAITING_APPROVAL": "awaiting_approval", "QUEUED": "queued", "RUNNING": "running", "SUCCEEDED": "succeeded", "FAILED": "failed", "CANCELLED": "cancelled", "UNKNOWN_OUTCOME": "unknown_outcome"} as const;
 export type ToolRunStatus = (typeof ToolRunStatus)[keyof typeof ToolRunStatus];
@@ -132,6 +132,26 @@ export const CAPABILITIES = [
     ],
     "purchasable": true,
     "description": "Consent-based campaigns and suppression"
+  },
+  {
+    "key": "voice.crm",
+    "requirementId": "KOK-05",
+    "module": "voice",
+    "dependencies": [
+      "voice.agents"
+    ],
+    "purchasable": true,
+    "description": "Contacts, consent ledger, suppression, leads and activities"
+  },
+  {
+    "key": "voice.appointments",
+    "requirementId": "KOK-05",
+    "module": "voice",
+    "dependencies": [
+      "voice.crm"
+    ],
+    "purchasable": true,
+    "description": "Appointment booking from calls, calendar availability"
   },
   {
     "key": "connect.embed",
@@ -347,6 +367,16 @@ export const CAPABILITIES = [
     ],
     "purchasable": true,
     "description": "Manima Hub / Manima One"
+  },
+  {
+    "key": "connector.erpnext",
+    "requirementId": "KOK-CONN-ERPNEXT",
+    "module": "connectors",
+    "dependencies": [
+      "connect.embed"
+    ],
+    "purchasable": true,
+    "description": "ERPNext / Frappe"
   }
 ] as const;
 export const API_PREFIX = "/v1";
